@@ -252,9 +252,9 @@ gg2 = ggplot(rotated.factors)+
   scale_shape_discrete(name = 'item type',labels = c('problem','solution'))+
   scale_size_continuous(name = '% chosen',breaks = c(0.1,0.3,0.5,0.7),labels = c('10%','30%','50%','70%'))+
   theme(legend.position = c(0.25,0.25))+
-  scale_y_continuous(name = 'Factor loading, dimension 2' ) + 
-  scale_x_continuous(name = 'Factor loading, dimension 1' ) + 
-  ggtitle('Bi-dimensional model') 
+  scale_y_continuous(name = 'Factor loading, Environmental Dimension' ) + 
+  scale_x_continuous(name = 'Factor loading, Social Dimension' ) + 
+  ggtitle('Bi-dimensional Model of Policy Preferences') 
 
 ggsave(filename = 'output/figures/figure_factor_loadings.png',plot = gg2,width = 7,height = 5.5, units = 'in',dpi = 350)
 #plot item and respondent locations for d = 2 model
@@ -262,12 +262,13 @@ gg3<-ggplot() +
   geom_point(aes(x = F1,y = F2,col = 'red'),data = rotated.factors,pch = 17,size = 2)+
   geom_label_repel(aes(y =F2,x = F1,label = item),max.overlaps = 20,data = rotated.factors) + 
   geom_point(aes(x = F1,y = F2,col = 'red'),data = rotated.factors,pch = 17,size = 2)+
-  geom_point(aes(x = F1,y = F2,col = 'black'),data = data.table(fscores(mods[[2]],rotate = 'oblimin')),pch = 21) + 
-  xlab('Factor 1 score') + ylab("Factor 2 score") + 
-  ggtitle('Estimated ideal points for survey respondents') + 
+  geom_point(aes(x = F1,y = F2,col = 'black'), data = data.table(fscores(mods[[2]],rotate = 'oblimin')),pch = 21) + 
+  xlab('Social Dimension Factor Score') + ylab("Environmental Dimension Factor Score") + 
+  ggtitle('Estimated Ideal Points for Policy Actors') + 
   scale_color_manual(name = '',labels=c('respondent','item'),values = c('black','red')) + 
   theme(legend.position = 'bottom',legend.direction = 'horizontal',
-        legend.backgroun = element_rect(fill = alpha('white',0)))
+        legend.backgroun = element_rect(fill = alpha('white',0)))+
+  guides(color = guide_legend(override.aes = list(shape=c(1, 24), fill=c('white', 'red'))))
 
 
 ggsave(filename = 'output/figures/figure_respondent_and_item_locations.png',plot = gg3,width = 7,height = 5.5, units = 'in',dpi = 350)
@@ -403,7 +404,7 @@ facts$When_SLR = facts$When_SLR * -1
 
 
 cfa_form <- '
-Engagement  =~  Q32_InfoTypes + Q1_Focus + Q11_STAware + Q11_LTAware + Q19_Sum\
+Participation  =~  Q32_InfoTypes + Q1_Focus + Q11_STAware + Q11_LTAware + Q19_Sum\
 Concern =~ Q12_STConcern + Q12_LTConcern + When_SLR
 '
 #cfa_fit = cfa(cfa_form,data = facts,ordered = c('Q1_Focus','When_SLR','Q11_STAware','Q11_LTAware','Q12_LTConcern','Q12_STConcern'))
@@ -413,7 +414,7 @@ cfa_fit = cfa(cfa_form,data = facts)
 #### THIS IS A GRAPH OF THE CFA FOR ENGAGEMENT
 
 start= get_layout('Q32_InfoTypes','Q1_Focus','Q11_STAware','Q11_LTAware','Q19_Sum',NA,
-NA,NA,'Engagement','Concern',NA,NA,
+NA,NA,'Participation','Concern',NA,NA,
 NA,NA,'Q12_STConcern','Q12_LTConcern','When_SLR',NA,rows = 3)
 
 cfa_graph = prepare_graph(cfa_fit,
@@ -429,12 +430,12 @@ fitmeasures(cfa_fit)
 
 ###Graph of CFA for engagement with Q19 percent instead of sum
 cfa_form2 <- '
-Engagement  =~  Q32_InfoTypes + Q1_Focus + Q11_STAware + Q11_LTAware + Q19_percent\
+Participation  =~  Q32_InfoTypes + Q1_Focus + Q11_STAware + Q11_LTAware + Q19_percent\
 Concern =~ Q12_STConcern + Q12_LTConcern + When_SLR
 '
 cfa_fit2 = cfa(cfa_form2,data = facts)
 start2= get_layout('Q32_InfoTypes','Q1_Focus','Q11_STAware','Q11_LTAware','Q19_percent',NA,
-                  NA,NA,'Engagement','Concern',NA,NA,
+                  NA,NA,'Participation','Concern',NA,NA,
                   NA,NA,'Q12_STConcern','Q12_LTConcern','When_SLR',NA,rows = 3)
 
 cfa_graph2 = prepare_graph(cfa_fit2,
@@ -448,13 +449,13 @@ ggsave(plot = gg_cfa2,filename = 'output/figures/cfa_plot_V2.png',width = 6,heig
 ####Final SEM Model Redo (all actor types and two latent variables)---------------------
 sem_formfin <- '
 #2 latent variables for engagement
-Engagement  =~  Q32_InfoTypes + Q1_Focus + Q11_STAware + Q11_LTAware + Q19_Sum
+Participation  =~  Q32_InfoTypes + Q1_Focus + Q11_STAware + Q11_LTAware + Q19_Sum
 
 Concern =~ Q12_STConcern + Q12_LTConcern + When_SLR
 
 #regression with all actor types (local gov baseline)
-F1 ~ Engagement + Concern + Q4_CBO + Q4_NGO + Q4_Fed + Q4_State + Q4_RegGov + Q4_EnviroSD + Q4_WaterSD + Q4_Ed + Q4_Multijuris + Q4_Multistake + Q4_Political + Q4_Trade + Q4_Enviro + OtherActorType
-F2 ~ Engagement + Concern + Q4_CBO + Q4_NGO + Q4_Fed + Q4_State + Q4_RegGov + Q4_EnviroSD + Q4_WaterSD + Q4_Ed + Q4_Multijuris + Q4_Multistake + Q4_Political + Q4_Trade + Q4_Enviro + OtherActorType
+F1 ~ Participation + Concern + Q4_CBO + Q4_NGO + Q4_Fed + Q4_State + Q4_RegGov + Q4_EnviroSD + Q4_WaterSD + Q4_Ed + Q4_Multijuris + Q4_Multistake + Q4_Political + Q4_Trade + Q4_Enviro + OtherActorType
+F2 ~ Participation + Concern + Q4_CBO + Q4_NGO + Q4_Fed + Q4_State + Q4_RegGov + Q4_EnviroSD + Q4_WaterSD + Q4_Ed + Q4_Multijuris + Q4_Multistake + Q4_Political + Q4_Trade + Q4_Enviro + OtherActorType
 #resid corrs
 F1~~F2
 '
@@ -468,7 +469,7 @@ start= get_layout(
   # row 2
   NA,NA,NA,'F1',NA,NA,'F2',NA,NA,
   # row 3
-  NA,'Q4_Enviro','Q4_Multijuris',NA,'Engagement','Concern',NA,'Q4_Multistake','Q4_Political',
+  NA,'Q4_Enviro','Q4_Multijuris',NA,'Participation','Concern',NA,'Q4_Multistake','Q4_Political',
   # row 4
   NA,'Q32_InfoTypes','Q1_Focus','Q11_STAware','Q11_LTAware',
                   'Q19_Sum','Q12_STConcern','Q12_LTConcern','When_SLR',
@@ -487,7 +488,7 @@ start= get_layout(
   # row 2
   NA,'F1',NA,'Q4_CBO',NA,'F2',NA,
   # row 3
-  'Q32_InfoTypes',NA,'Engagement',NA,'Concern',NA,'When_SLR',
+  'Q32_InfoTypes',NA,'Participation',NA,'Concern',NA,'When_SLR',
   # row 4
   'Q1_Focus','Q11_STAware','Q11_LTAware',
   'Q19_Sum',NA,'Q12_STConcern','Q12_LTConcern',
@@ -849,7 +850,7 @@ facts$InfoTypes <- facts$Q32_InfoTypes
 facts$Focus <- facts$Q1_Focus
 
 cfa_form <- '
-Engagement  =~  InfoTypes + Focus + ShortTermAware + LongTermAware + CollabActions\
+Participation =~  InfoTypes + Focus + ShortTermAware + LongTermAware + CollabActions\
 Concern =~ ShortTermConcern + LongTermConcern + When_SLR
 '
 #cfa_fit = cfa(cfa_form,data = facts,ordered = c('Focus','When_SLR','ShortTermAware','LongTermAware','LongTermConcern','ShortTermConcern'))
@@ -859,7 +860,7 @@ cfa_fit = cfa(cfa_form,data = facts)
 #### THIS IS A GRAPH OF THE CFA FOR ENGAGEMENT
 
 start= get_layout('InfoTypes','Focus','ShortTermAware','LongTermAware','CollabActions',NA,
-                  NA,NA,'Engagement','Concern',NA,NA,
+                  NA,NA,'Participation','Concern',NA,NA,
                   NA,NA,'ShortTermConcern','LongTermConcern','When_SLR',NA,rows = 3)
 
 cfa_graph = prepare_graph(cfa_fit,
@@ -867,7 +868,7 @@ cfa_graph = prepare_graph(cfa_fit,
 cfa_graph = hide_var(cfa_graph)
 
 (gg_cfa = plot(cfa_graph) + 
-    ggtitle('Confirmatory factor analysis of SLR involvement constructs') +
+    ggtitle('Confirmatory factor analysis of SLR engagement constructs') +
     coord_flip())
 ggsave(plot = gg_cfa,filename = 'output/figures/cfa_plot_final.png',width = 6,height = 4.5,dpi = 300, units = 'in')
 
@@ -877,13 +878,13 @@ ggsave(plot = gg_cfa,filename = 'output/figures/cfa_plot_final.png',width = 6,he
 
 sem_formfin <- '
 #2 latent variables for engagement
-Engagement  =~  InfoTypes + Focus + ShortTermAware + LongTermAware + CollabActions
+Participation  =~  InfoTypes + Focus + ShortTermAware + LongTermAware + CollabActions
 
 Concern =~ ShortTermConcern + LongTermConcern + When_SLR
 
 #regression with all actor types (local gov baseline)
-F1 ~ Engagement + Concern + Q4_CBO + Q4_NGO + Q4_Fed + Q4_State + Q4_RegGov + Q4_EnviroSD + Q4_WaterSD + Q4_Ed + Q4_Multijuris + Q4_Multistake + Q4_Political + Q4_Trade + Q4_Enviro + OtherActorType
-F2 ~ Engagement + Concern + Q4_CBO + Q4_NGO + Q4_Fed + Q4_State + Q4_RegGov + Q4_EnviroSD + Q4_WaterSD + Q4_Ed + Q4_Multijuris + Q4_Multistake + Q4_Political + Q4_Trade + Q4_Enviro + OtherActorType
+F1 ~ Participation + Concern + Q4_CBO + Q4_NGO + Q4_Fed + Q4_State + Q4_RegGov + Q4_EnviroSD + Q4_WaterSD + Q4_Ed + Q4_Multijuris + Q4_Multistake + Q4_Political + Q4_Trade + Q4_Enviro + OtherActorType
+F2 ~ Participation + Concern + Q4_CBO + Q4_NGO + Q4_Fed + Q4_State + Q4_RegGov + Q4_EnviroSD + Q4_WaterSD + Q4_Ed + Q4_Multijuris + Q4_Multistake + Q4_Political + Q4_Trade + Q4_Enviro + OtherActorType
 #resid corrs
 F1~~F2
 '
@@ -897,7 +898,7 @@ start= get_layout(
   # row 2
   NA,NA,NA,'F1',NA,NA,'F2',NA,NA,
   # row 3
-  NA,'Q4_Enviro','Q4_Multijuris',NA,'Engagement','Concern',NA,'Q4_Multistake','Q4_Political',
+  NA,'Q4_Enviro','Q4_Multijuris',NA,'Participation','Concern',NA,'Q4_Multistake','Q4_Political',
   # row 4
   NA,'InfoTypes','Focus','ShortTermAware','LongTermAware',
   'CollabActions','ShortTermConcern','LongTermConcern','When_SLR',
@@ -916,7 +917,7 @@ start= get_layout(
   # row 2
   NA,'F1',NA,'Q4_CBO',NA,'F2',NA,
   # row 3
-  'InfoTypes',NA,'Engagement',NA,'Concern',NA,'When_SLR',
+  'InfoTypes',NA,'Participation',NA,'Concern',NA,'When_SLR',
   # row 4
   'Focus','ShortTermAware','LongTermAware',
   'CollabActions',NA,'ShortTermConcern','LongTermConcern',
@@ -998,10 +999,10 @@ AvgFactors_OrgType <- as.data.frame(AvgFactors_OrgType)
     geom_text_repel(col = 'grey50',data = rotated.factors,aes(y =F2,x = F1,label = item),max.overlaps = 30) + 
   geom_point(data = AvgFactors_OrgType, shape = 15,aes(x=as.numeric(AvgF1_OrgType), y=as.numeric(AvgF2_OrgType)))+
   ggrepel::geom_label_repel(data=AvgFactors_OrgType, aes(label=SigOrgType,x=as.numeric(AvgF1_OrgType), y=as.numeric(AvgF2_OrgType)),min.segment.length = 0.2)+
-  xlab('Factor 1 score') + ylab("Factor 2 score") + 
+  xlab('Social Dimension Factor Score') + ylab("Environmental Dimension Factor Score") + 
     theme(legend.position = c(0.2,0.2))+
     scale_shape_discrete(name = 'item type',labels = c('problem','solution'),solid = F)+
-  ggtitle('Average ideal points for survey respondents by organization type','overlaid on item factor scores'))
+  ggtitle('Average ideal points for actors by organization type','overlaid on item factor scores'))
 
 ggsave(plot = AvgFact_OrgTypeFig,filename = 'output/figures/avgFscores_orgtype.png',width = 7,height = 7,dpi = 600, units = 'in')
 
