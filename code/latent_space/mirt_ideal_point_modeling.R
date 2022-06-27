@@ -212,7 +212,7 @@ if(!DROP_BARRIERS){grid.arrange(plist[[1]],plist[[2]],plist[[3]],bottom= 'Respon
 item_incidence <- incidence_dt[, 2:43]
 itemcorrs <- cor(item_incidence)
 hist(itemcorrs)
-write.csv(itemcorrs, "item_incidence_corr.csv")
+write.csv(itemcorrs, 'output/tables/item_incidence_corr.csv')
 
 #####  FIT MIRT MODELS ###3
 #### WARNING d = 3 TAKES A LITTLE BIT. AND DOESN"T CONVERGE AT 500 CYCLES #####
