@@ -208,6 +208,12 @@ plist = list(ggplot(mY[cat =='Concern',]) + geom_point(aes(x = fact,y = 100 * V1
 if(DROP_BARRIERS){grid.arrange(plist[[1]],plist[[2]],bottom= 'Respondent selection #',ncol=2)}
 if(!DROP_BARRIERS){grid.arrange(plist[[1]],plist[[2]],plist[[3]],bottom= 'Respondent selection #',ncol=3)}
 
+#correlation of item selection (co-occurence)
+item_incidence <- incidence_dt[, 2:43]
+itemcorrs <- cor(item_incidence)
+hist(itemcorrs)
+write.csv(itemcorrs, "item_incidence_corr.csv")
+
 #####  FIT MIRT MODELS ###3
 #### WARNING d = 3 TAKES A LITTLE BIT. AND DOESN"T CONVERGE AT 500 CYCLES #####
 #### need to set dims = 1:3 to also run the 3 dim model ####
