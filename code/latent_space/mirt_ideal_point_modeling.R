@@ -65,6 +65,7 @@ rownames(incidence_mat)<-incidence_dt$ResponseId
 incidence_mat = incidence_mat[rowSums(incidence_mat)!=0,]
 incidence_mat = incidence_mat[,!grepl('Other',colnames(incidence_mat))]
 
+
 #create network object
 bip_net = as.network(incidence_mat,matrix.type = 'incidence',bipartite = T,directed = F,loops = F)
 #code actor types
@@ -209,10 +210,12 @@ if(DROP_BARRIERS){grid.arrange(plist[[1]],plist[[2]],bottom= 'Respondent selecti
 if(!DROP_BARRIERS){grid.arrange(plist[[1]],plist[[2]],plist[[3]],bottom= 'Respondent selection #',ncol=3)}
 
 #correlation of item selection (co-occurence)
-item_incidence <- incidence_dt[, 2:43]
-itemcorrs <- cor(item_incidence)
+incidence_mat_df <-as.data.frame(incidence_mat)
+itemcorrs <- cor(incidence_mat_df)
 hist(itemcorrs)
 write.csv(itemcorrs, 'output/tables/item_incidence_corr.csv')
+
+table(incidence_mat_df$Stormwater, incidence_mat_df$Ecosystem)
 
 #####  FIT MIRT MODELS ###3
 #### WARNING d = 3 TAKES A LITTLE BIT. AND DOESN"T CONVERGE AT 500 CYCLES #####
