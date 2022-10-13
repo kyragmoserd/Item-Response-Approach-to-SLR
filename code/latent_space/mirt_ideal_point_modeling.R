@@ -21,31 +21,6 @@ invisible(sapply(packs,function(x) suppressMessages(library(x,character.only = T
 
 
 
-
-#above code didn't work for Kyra so below commented out code is just to reload packages manually each time Kyra runs code
-#library(tidyverse)
-#library(purrr)
-#library(data.table)
-#library(statnet)
-#library(latentnet)
-#library(bipartite)
-#library(lvm4net)
-#library(mirt)
-#library(pbapply)
-#library(Hmisc)
-#library(htmlTable)
-#library(ggthemes)
-#library(here)
-#library(ggnetwork)
-#library(gridExtra)
-#library(ggrepel)
-#library(corrplot)
-#library(readxl)
-#library(nFactors)
-#library(plotly)
-#library(ggalluvial)
-
-
 ### make bw theme default ###
 
 ### read in data
@@ -599,6 +574,7 @@ ggplot(test_mean,aes(x = V1,y = V2,label= variable)) +
 
 sem_html3 <- semTable(sem_fit3, type="html")
 readr::write_file(sem_html3, "output/tables/sem_model_V3_10-7.html")
+
 ####Sem Paths Plot Diagram of SEM Model------------
 #path plot for first sem
 ly = get_layout(sem_fit, 
@@ -650,6 +626,7 @@ sem_fitfin = sem(sem_formfin,data =  facts)
 summary(sem_fitfin,fit.measures = T)
 
 sem_htmlfin <- semTable(sem_fitfin, type="html")
+
 #install.packages("readr")
 library(readr)
 readr::write_file(sem_htmlfin, "output/tables/sem_model_10-18.html")
@@ -813,7 +790,7 @@ ggplot(policymatrix, aes(x=name, y=value))+
   theme(plot.title = element_text(hjust = 0.5))
 dev.off()
 
-########Kyra Edits to Figures for Paper Update 12-29-21-----------
+########Edits to Figures for Paper Update 12-29-21-----------
 #Figure 1 Concerns Bar Plot
 #Fixes- Remove Other, Reorder by Frequency
 concernsums_v2 <- c(434, 393, 315, 227, 137, 128, 88, 81, 51, 41, 36, 24)
@@ -956,7 +933,7 @@ sem_graph$nodes$label[sem_graph$nodes$label=='Q4_CBO']<-''
 
 ggsave(plot = gg_sem,filename = 'output/figures/sem_plot_stylizedOrgType_edited.png',width = 7,height = 5,dpi = 600, units = 'in')
 
-#Attempt Figure 6- Average Location by Org Type
+#Figure 6- Average Location by Org Type
 
 #Average F1 and F2 for Fed
 facts %>%
@@ -1002,7 +979,6 @@ AvgFactors_OrgType <- cbind(SigOrgType, AvgF1_OrgType, AvgF2_OrgType)
 AvgFactors_OrgType <- as.data.frame(AvgFactors_OrgType)
 
 
-#Working on Getting Labels for Org Type but for some reason won't work
 (AvgFact_OrgTypeFig<-ggplot()+ 
   geom_point(data = rotated.factors,col = 'grey50',aes(y =F2,x = F1,shape = type)) + 
     geom_text_repel(col = 'grey50',data = rotated.factors,aes(y =F2,x = F1,label = item),max.overlaps = 30) + 
