@@ -32,7 +32,7 @@ orig$Q4[is.na(orig$Q4)]<-'Other'
 #as.data.table(table(orig$Q4))[order(-N),][N<10,]
 orig$Q4[orig$Q4 %in% as.data.table(table(orig$Q4))[order(-N),][N<10,]$V1] <- 'Other'
 orig$Q4[grepl('Other',orig$Q4)]<-'Other'
-incidence_dt = fread("CurrentFiles/Data/AdjMatrix_MinOtherRecode.csv")
+incidence_dt = fread("input/AdjMatrix_MinOtherRecode.csv")
 
 incidence_mat = as.matrix(incidence_dt[,-c('ResponseId','DK')])
 rownames(incidence_mat)<-incidence_dt$ResponseId
@@ -195,16 +195,27 @@ table(incidence_mat_df$Stormwater, incidence_mat_df$Ecosystem)
 #####  FIT MIRT MODELS ###3
 #### WARNING d = 3 TAKES A LITTLE BIT. AND DOESN"T CONVERGE AT 500 CYCLES #####
 #### need to set dims = 1:3 to also run the 3 dim model ####
+
+#Setting Priors 11-11-22
+mod_priors <- list(
+  mirt.model('F1 = 1-26
+PRIOR = (1-26, a1, norm, 0, 1)'),
+  mirt.model('F1 = 1-26
+F2 = 1-26
+PRIOR = (1-26, a1, norm, 0, 1)'))
+
+
 dims = 1:2
 cycles = 500
 mods = mclapply(dims,function(d){
   # note that formula allows fitting predictors, but this only seems to work with dominance models like 2PL, which I guess makes sense since in unfolding model it's about relative location
-  mirt(Y,model = d,itemtype = 'ideal',method = 'EM',technical = list(NCYCLES = cycles))#,formula = ~Q1_Focus + When_SLR + Q16_Risk_Agree + Q17_Action_Agree,covdata = predictor_dt)
+  mirt(Y,model = mod_priors[[d]] ,itemtype = 'ideal',method = 'EM',technical = list(NCYCLES = cycles))#,formula = ~Q1_Focus + When_SLR + Q16_Risk_Agree + Q17_Action_Agree,covdata = predictor_dt)
 },mc.cores = min(length(dims),4),mc.cleanup = T,mc.preschedule = T)
-
+#note that model=mod_priors is code attempt at inserting priors, versus model=d for dimensions
 
 ###Code to Run on Window####
-#mods = lapply(dims,function(d){mirt(Y,model = d,itemtype = 'ideal',method = 'EM',technical = list(NCYCLES = cycles))}) #,formula = ~Q1_Focus + When_SLR + Q16_Risk_Agree + Q17_Action_Agree,covdata = predictor_dt)
+#mods = lapply(dims,function(d){mirt(Y,model = mod_priors[[d]] ,itemtype = 'ideal',method = 'EM',technical = list(NCYCLES = cycles))}) #,formula = ~Q1_Focus + When_SLR + Q16_Risk_Agree + Q17_Action_Agree,covdata = predictor_dt)
+#note that model=mod_priors is code attempt at inserting priors, versus model=d for dimensions
 
 #make a data.table of item factor scores for d = 1
 rotated.factors = data.table(mirt::summary(mods[[1]])$rotF,item = colnames(Y))
