@@ -6,7 +6,7 @@ DROP_BARRIERS=T
 
 ### load packages (not all of htese are needed at this point, so shoudl be cleaned up a bit)
 packs =c('reshape2','Hmisc','tidyverse','purrr','data.table','statnet','latentnet','bipartite','lvm4net','mirt','pbapply','Hmisc',
-         'htmlTable','parallel','parallel','semTable',
+         'htmlTable','parallel','parallel','semTable','tidySEM','lavaan',
          'ggthemes','here','ggnetwork','gridExtra','ggrepel','corrplot','htmlTable','readxl','nFactors','ggrepel','plotly','ggalluvial')
 need = packs[!packs %in% names(installed.packages()[,2])]
 invisible(sapply(need,function(x) suppressMessages(install.packages(x,type= 'source'))))
@@ -385,10 +385,7 @@ facts$OtherActorType <- ifelse(facts$noactorcat=="1", 1, 0)
 #create a percent of possible collaborative activities variable
 facts$Q19_percent <- facts$Q19_Sum/15
 
-require(lavaan)
-require(tidySEM)
 
-facts$Q32_InfoTypes
 facts$When_SLR = facts$When_SLR * -1
 
 
@@ -578,12 +575,11 @@ ggplot(test_mean,aes(x = V1,y = V2,label= variable)) +
 
 
 sem_html3 <- semTable(sem_fit3, type="html")
-readr::write_file(sem_html3, "output/tables/sem_model_V3_10-7.html")
+readr::write_file(sem_html3, "output/tables/sem_model_V3.html")
 
 ####Sem Paths Plot Diagram of SEM Model------------
 #path plot for first sem
-ly = get_layout(sem_fit, 
-                     layout_algorithm = 'layout_with_kk')
+ly = get_layout(sem_fit,  layout_algorithm = 'layout_with_kk')
 sem_plot = tidySEM::prepare_graph(sem_fit,layout = ly)
 sem_plot <- tidySEM::hide_var(sem_plot)
 
@@ -662,7 +658,7 @@ readr::write_file(sem_htmlfin2, "output/tables/sem_model_11-4.html")
 
 
 #path plot for final sem
-library(tidySEM)
+
 lyfin = get_layout(sem_fitfin, 
                 layout_algorithm = 'layout_with_kk')
 sem_plotfin = tidySEM::prepare_graph(sem_fitfin,layout = lyfin)
