@@ -13,12 +13,6 @@ invisible(sapply(need,function(x) suppressMessages(install.packages(x,type= 'sou
 invisible(sapply(packs,function(x) suppressMessages(library(x,character.only = T))))
 
 
-packs =c('Hmisc','tidyverse','purrr','data.table','statnet','latentnet','bipartite','lvm4net','mirt','pbapply','Hmisc','htmlTable','parallel','parallel',
-         'ggthemes','here','ggnetwork','gridExtra','ggrepel','corrplot','htmlTable','readxl','nFactors','ggrepel','plotly','ggalluvial')
-need = packs[!packs %in% names(installed.packages()[,2])]
-invisible(sapply(need,function(x) suppressMessages(install.packages(x,type= 'library'))))
-invisible(sapply(packs,function(x) suppressMessages(library(x,character.only = T))))
-
 
 
 ### make bw theme default ###
@@ -187,7 +181,7 @@ if(!DROP_BARRIERS){grid.arrange(plist[[1]],plist[[2]],plist[[3]],bottom= 'Respon
 #correlation of item selection (co-occurence)
 incidence_mat_df <-as.data.frame(incidence_mat)
 itemcorrs <- cor(incidence_mat_df)
-hist(itemcorrs)
+
 write.csv(itemcorrs, 'output/tables/item_incidence_corr.csv')
 
 table(incidence_mat_df$Stormwater, incidence_mat_df$Ecosystem)
@@ -286,10 +280,12 @@ f2_cor_tests = lapply(varlist,function(x) cor.test(facts$F2,facts[[x]],method = 
 est2 = formatC(round(sapply(f2_cor_tests,function(x) x$estimate),3),flag = '0',digits = 3)
 p2 = sapply(f2_cor_tests,function(x) x$p.value)
 
-
-stargazer::stargazer(data.table(item = varlist,
-           F1 = paste0(est1,ifelse(p1<0.05,'*',ifelse(p1<0.01,'**',ifelse(p1<0.001,'***','')))),
-           F2 = paste0(est2,ifelse(p2<0.05,'*',ifelse(p2<0.01,'**',ifelse(p2<0.001,'***',''))))),summary = F,out = 'output/tables/correlation_tests.html')
+temp_tab <- data.table(item = varlist,
+                       F1 = paste0(est1,ifelse(p1<0.05,'*',ifelse(p1<0.01,'**',ifelse(p1<0.001,'***','')))),
+                       F2 = paste0(est2,ifelse(p2<0.05,'*',ifelse(p2<0.01,'**',ifelse(p2<0.001,'***','')))))
+stargazer::stargazer(temp_tab,
+           summary = F,
+           out = 'output/tables/correlation_tests.html')
 
 
 
@@ -320,8 +316,6 @@ corrplot(corrs, method='circle')
 #     geom_density(data = data.table(fscores(mods[[2]],rotate = 'oblimin')),aes(x = F2,fill = 'respondent'),alpha = 0.7) +
 #     scale_fill_manual(values = c('light blue','dark blue'),name = 'estimated location') + 
 #     xlab('factor 2'))
-
-
 
 if(any(dims==3)){
 # same stuff but for d = 3
@@ -676,7 +670,7 @@ sem_plotfin <- tidySEM::hide_var(sem_plotfin)
 
 gg_semfin = plot(sem_plotfin) + ggtitle('F1 and F1 regressed on engagement + concern + covariates')
 
-ggsave(filename = 'output/figures/SEM_final_diagram_11-4.png',plot = gg_sem,dpi = 300,width = 7,height = 5,units = 'in')
+ggsave(filename = 'output/figures/SEM_final_diagram.png',plot = gg_sem,dpi = 300,width = 7,height = 5,units = 'in')
 
 
 lyfin2 = get_layout(sem_fitfin2, 
