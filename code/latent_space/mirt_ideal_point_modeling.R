@@ -6,18 +6,12 @@ DROP_BARRIERS=T
 
 ### load packages (not all of htese are needed at this point, so shoudl be cleaned up a bit)
 packs =c('reshape2','Hmisc','tidyverse','purrr','data.table','statnet','latentnet','bipartite','lvm4net','mirt','pbapply','Hmisc',
-         'htmlTable','parallel','parallel','semTable',
+         'htmlTable','parallel','parallel','semTable','tidySEM','lavaan',
          'ggthemes','here','ggnetwork','gridExtra','ggrepel','corrplot','htmlTable','readxl','nFactors','ggrepel','plotly','ggalluvial')
 need = packs[!packs %in% names(installed.packages()[,2])]
 invisible(sapply(need,function(x) suppressMessages(install.packages(x,type= 'source'))))
 invisible(sapply(packs,function(x) suppressMessages(library(x,character.only = T))))
 
-
-packs =c('Hmisc','tidyverse','purrr','data.table','statnet','latentnet','bipartite','lvm4net','mirt','pbapply','Hmisc','htmlTable','parallel','parallel',
-         'ggthemes','here','ggnetwork','gridExtra','ggrepel','corrplot','htmlTable','readxl','nFactors','ggrepel','plotly','ggalluvial')
-need = packs[!packs %in% names(installed.packages()[,2])]
-invisible(sapply(need,function(x) suppressMessages(install.packages(x,type= 'library'))))
-invisible(sapply(packs,function(x) suppressMessages(library(x,character.only = T))))
 
 
 
@@ -187,7 +181,7 @@ if(!DROP_BARRIERS){grid.arrange(plist[[1]],plist[[2]],plist[[3]],bottom= 'Respon
 #correlation of item selection (co-occurence)
 incidence_mat_df <-as.data.frame(incidence_mat)
 itemcorrs <- cor(incidence_mat_df)
-hist(itemcorrs)
+
 write.csv(itemcorrs, 'output/tables/item_incidence_corr.csv')
 
 table(incidence_mat_df$Stormwater, incidence_mat_df$Ecosystem)
@@ -286,10 +280,12 @@ f2_cor_tests = lapply(varlist,function(x) cor.test(facts$F2,facts[[x]],method = 
 est2 = formatC(round(sapply(f2_cor_tests,function(x) x$estimate),3),flag = '0',digits = 3)
 p2 = sapply(f2_cor_tests,function(x) x$p.value)
 
-
-stargazer::stargazer(data.table(item = varlist,
-           F1 = paste0(est1,ifelse(p1<0.05,'*',ifelse(p1<0.01,'**',ifelse(p1<0.001,'***','')))),
-           F2 = paste0(est2,ifelse(p2<0.05,'*',ifelse(p2<0.01,'**',ifelse(p2<0.001,'***',''))))),summary = F,out = 'output/tables/correlation_tests.html')
+temp_tab <- data.table(item = varlist,
+                       F1 = paste0(est1,ifelse(p1<0.05,'*',ifelse(p1<0.01,'**',ifelse(p1<0.001,'***','')))),
+                       F2 = paste0(est2,ifelse(p2<0.05,'*',ifelse(p2<0.01,'**',ifelse(p2<0.001,'***','')))))
+stargazer::stargazer(temp_tab,
+           summary = F,
+           out = 'output/tables/correlation_tests.html')
 
 
 
@@ -301,7 +297,7 @@ library(data.table)
 setnames(corrsdata, old = c("F1", "F2", "Q1_Focus", "When_SLR", "Q16_Risk_Agree", "Q17_Action_Agree", "Q4_Fed","Q4_State", "Q4_RegGov", "Q4_LocalGov", "Q4_WaterSD", "Q4_EnviroSD", "Q4_Enviro", "Q4_Trade", "Q4_Ed", "Q4_Multistake", "Q4_Multijuris", "Q4_Political", "Q4_CBO", "Q4_NGO", "Q8_JobTasks", "Q32_InfoTypes", "Q11_STAware", "Q11_LTAware", "Q12_STConcern", "Q12_LTConcern", "Q20_HumRes", "Q20_FinRes", "Q20_ExpCollab", "Q20_StakeOpp", "Q20_PolLead", "Q20_SLRUncertain", "Q20_SciInfo", "Q20_OrgLead", "Q20_OverallPlan", "Q20_Permits","Q20_PubSupport", "Q20_CBORelation", "Q20_Sum"), new = c("F1", "F2", "Focus", "When_SLR", "Risk_Agree", "Action_Agree", "Fed","State", "RegGov", "LocalGov", "WaterSD", "EnviroSD", "Enviro", "Trade", "Ed", "Multistake", "Multijuris", "Political", "CBO", "NGO", "Tasks", "InfoTypes", "STAware", "LTAware", "STConcern", "LTConcern", "HumRes", "FinRes", "CollabExp", "PublicOppose", "PoliticalLead", "SLRUncertain", "SciInfo", "OrgLead", "OverallPlan", "Permits","PubSupport", "CBORelations", "No.Barriers"))
 
 corrs <- cor(corrsdata)
-png(filename='output/figures/figure_corrplot.png')
+png(filename='output/figures/figure_corrplot_11-28-22.png')
 corrplot(corrs, method='color')
 dev.off()
 corrplot(corrs, method='circle')
@@ -320,8 +316,6 @@ corrplot(corrs, method='circle')
 #     geom_density(data = data.table(fscores(mods[[2]],rotate = 'oblimin')),aes(x = F2,fill = 'respondent'),alpha = 0.7) +
 #     scale_fill_manual(values = c('light blue','dark blue'),name = 'estimated location') + 
 #     xlab('factor 2'))
-
-
 
 if(any(dims==3)){
 # same stuff but for d = 3
@@ -391,10 +385,7 @@ facts$OtherActorType <- ifelse(facts$noactorcat=="1", 1, 0)
 #create a percent of possible collaborative activities variable
 facts$Q19_percent <- facts$Q19_Sum/15
 
-require(lavaan)
-require(tidySEM)
 
-facts$Q32_InfoTypes
 facts$When_SLR = facts$When_SLR * -1
 
 
@@ -441,13 +432,52 @@ cfa_graph2 = hide_var(cfa_graph2)
     ggtitle('Confirmatory factor analysis: indicators of policy engagement') +
     coord_flip())
 ggsave(plot = gg_cfa2,filename = 'output/figures/cfa_plot_V2.png',width = 6,height = 4.5,dpi = 300, units = 'in')
-####Final SEM Model Redo (all actor types and two latent variables)---------------------
+
+
+
+#Figure 4 CFA Plot Fixes- Retitle and Change Labels
+
+facts$ShortTermAware <- facts$Q11_STAware
+facts$LongTermAware <- facts$Q11_LTAware
+facts$CollabActions <- facts$Q19_Sum
+facts$ShortTermConcern <- facts$Q12_STConcern
+facts$LongTermConcern <- facts$Q12_LTConcern
+facts$InfoTypes <- facts$Q32_InfoTypes
+facts$Focus <- facts$Q1_Focus
+
+cfa_form <- '
+Participation =~  InfoTypes + Focus + ShortTermAware + LongTermAware + CollabActions\
+Concern =~ ShortTermConcern + LongTermConcern + When_SLR
+'
+#cfa_fit = cfa(cfa_form,data = facts,ordered = c('Focus','When_SLR','ShortTermAware','LongTermAware','LongTermConcern','ShortTermConcern'))
+cfa_fit = cfa(cfa_form,data = facts)
+
+
+#### THIS IS A GRAPH OF THE CFA FOR ENGAGEMENT
+
+start= get_layout('InfoTypes','Focus','ShortTermAware','LongTermAware','CollabActions',NA,
+                  NA,NA,'Participation','Concern',NA,NA,
+                  NA,NA,'ShortTermConcern','LongTermConcern','When_SLR',NA,rows = 3)
+
+cfa_graph = prepare_graph(cfa_fit,
+                          layout =start)
+cfa_graph = hide_var(cfa_graph)
+
+(gg_cfa = plot(cfa_graph) + 
+    ggtitle('Confirmatory factor analysis of SLR engagement constructs') +
+    coord_flip())
+ggsave(plot = gg_cfa,filename = 'output/figures/cfa_plot_final.png',width = 6,height = 4.5,dpi = 300, units = 'in')
+
+
+####SEM Model (all actor types and two latent variables)---------------------
+
+
+####SEM Model ------------
+
 sem_formfin <- '
 #2 latent variables for engagement
-Participation  =~  Q32_InfoTypes + Q1_Focus + Q11_STAware + Q11_LTAware + Q19_Sum
-
-Concern =~ Q12_STConcern + Q12_LTConcern + When_SLR
-
+Participation  =~  InfoTypes + Focus + ShortTermAware + LongTermAware + CollabActions
+Concern =~ ShortTermConcern + LongTermConcern + When_SLR
 #regression with all actor types (local gov baseline)
 F1 ~ Participation + Concern + Q4_CBO + Q4_NGO + Q4_Fed + Q4_State + Q4_RegGov + Q4_EnviroSD + Q4_WaterSD + Q4_Ed + Q4_Multijuris + Q4_Multistake + Q4_Political + Q4_Trade + Q4_Enviro + OtherActorType
 F2 ~ Participation + Concern + Q4_CBO + Q4_NGO + Q4_Fed + Q4_State + Q4_RegGov + Q4_EnviroSD + Q4_WaterSD + Q4_Ed + Q4_Multijuris + Q4_Multistake + Q4_Political + Q4_Trade + Q4_Enviro + OtherActorType
@@ -466,9 +496,9 @@ start= get_layout(
   # row 3
   NA,'Q4_Enviro','Q4_Multijuris',NA,'Participation','Concern',NA,'Q4_Multistake','Q4_Political',
   # row 4
-  NA,'Q32_InfoTypes','Q1_Focus','Q11_STAware','Q11_LTAware',
-                  'Q19_Sum','Q12_STConcern','Q12_LTConcern','When_SLR',
-                  rows = 4)
+  NA,'InfoTypes','Focus','ShortTermAware','LongTermAware',
+  'CollabActions','ShortTermConcern','LongTermConcern','When_SLR',
+  rows = 4)
 
 sem_graph = prepare_graph(sem_fitfin,
                           layout =start)
@@ -476,17 +506,17 @@ sem_graph = hide_var(sem_graph)
 
 (gg_sem = plot(sem_graph) + 
     ggtitle('SEM: indicators of policy engagement') + coord_flip())
-  
+
 
 
 start= get_layout(
   # row 2
   NA,'F1',NA,'Q4_CBO',NA,'F2',NA,
   # row 3
-  'Q32_InfoTypes',NA,'Participation',NA,'Concern',NA,'When_SLR',
+  'InfoTypes',NA,'Participation',NA,'Concern',NA,'When_SLR',
   # row 4
-  'Q1_Focus','Q11_STAware','Q11_LTAware',
-  'Q19_Sum',NA,'Q12_STConcern','Q12_LTConcern',
+  'Focus','ShortTermAware','LongTermAware',
+  'CollabActions',NA,'ShortTermConcern','LongTermConcern',
   rows = 3)
 
 sem_graph = prepare_graph(sem_fitfin,
@@ -504,152 +534,28 @@ sem_graph$nodes$label[sem_graph$nodes$label=='Q4_CBO']<-''
               linetype = 3,colour = 'black',
               aes(xmin = node_xmin-0.1,xmax = node_xmax+.1,ymax = node_ymax+0.1,ymin = node_ymin-0.1))+
     geom_text(data = sem_graph$nodes[sem_graph$nodes$label=='',],
-    aes(label = 'Org. type*',x = x,y = y)) + coord_flip() +
-  annotate('text',x = 1,y =6.5,label = '*represents 13 org.\ntype indicators',col = 'black') +
+              aes(label = 'Org. type^',x = x,y = y)) + coord_flip() +
+    annotate('text',x = 2.25,y =6,label = '^ represents 13 org.\ntype indicators',col = 'black') +
+    annotate('text', x=1.25, y=6, label='p-values *<0.05, **<0.01, ***<0.001', col='black')+
     theme(text = element_text(family = 'Times',size = 12)) +
     ggtitle('SEM: Engagement and org. type as predictors of factor location')
-  ) 
+) 
 
-ggsave(plot = gg_sem,filename = 'output/figures/sem_plot_stylizedOrgType.png',width = 7,height = 5,dpi = 600, units = 'in')
+ggsave(plot = gg_sem,filename = 'output/figures/sem_plot_11-28-22.png',width = 7,height = 5,dpi = 600, units = 'in')
 
-library(stargazer)
-summary(cfa_fit)
-summary(sem_fitfin)
-sem_fitfin@Fit@est
-cfa_fit@Fit@est
-
-sem_form <- '
-#latent variable for engagement
-Engagement  =~  Q32_InfoTypes + Q1_Focus + When_SLR + Q11_STAware + Q11_LTAware + Q12_LTConcern + Q12_STConcern
-#regression 
-F1 ~ Engagement + nonprofit + govagency + othergroup_wEnviro
-F2 ~ Engagement + nonprofit + govagency + othergroup_wEnviro
-#resid corrs
-F1~~F2
-'
-sem_fit = sem(sem_form,data =  facts)
-
-summary(sem_fit,fit.measures = T)
-
-
-
-sem_html <- semTable(sem_fit, type="html")
+sem_html <- semTable(sem_fitfin, type="html")
 #install.packages("readr")
 library(readr)
-readr::write_file(sem_html, "output/tables/sem_model_V1_10-7.html")
-
-####Try SEM with environmental groups separated
-sem_form2 <- '
-#latent variable for engagement
-Engagement  =~  Q32_InfoTypes + Q1_Focus + When_SLR + Q11_STAware + Q11_LTAware + Q12_LTConcern + Q12_STConcern
-#regression 
-F1 ~ Engagement + nonprofit + govagency + enviro + othergroup
-F2 ~ Engagement + nonprofit + govagency + enviro + othergroup
-#resid corrs
-F1~~F2
-'
-sem_fit2 = sem(sem_form2,data =  facts)
-
-summary(sem_fit2,fit.measures = T)
-
-sem_html2 <- semTable(sem_fit2, type="html")
-readr::write_file(sem_html2, "output/tables/sem_model_V2_10-7.html")
-
-####Try SEM with enviro groups added to nonprofit
-sem_form3 <- '
-#latent variable for engagement
-Engagement  =~  Q32_InfoTypes + Q1_Focus + When_SLR + Q11_STAware + Q11_LTAware + Q12_LTConcern + Q12_STConcern
-#regression 
-F1 ~ Engagement + noprofit + govagency + othergroup
-F2 ~ Engagement + noprofit + govagency + othergroup
-#resid corrs
-F1~~F2
-'
-sem_fit3 = sem(sem_form3,data =  facts)
-
-summary(sem_fit3,fit.measures = T)
-
-test = reshape2::melt(facts[,c(grep('Q4',names(facts),value = T),'F1','F2'),with = F],
-               id.vars = c('F1','F2'))
-test = data.table(test)
-
-test_mean = test[value ==1,list(mean(F1),mean(F2)),by=.(variable)]
-
-head(test_mean)
-ggplot(test_mean,aes(x = V1,y = V2,label= variable)) + 
-  geom_point() + scale_x_continuous(limits = c(-1,1))+
-  scale_y_continuous(limits = c(-1,1))+
-  geom_label_repel()
+readr::write_file(sem_html, "output/tables/sem_model_11-28-22.html")
 
 
 
-sem_html3 <- semTable(sem_fit3, type="html")
-readr::write_file(sem_html3, "output/tables/sem_model_V3_10-7.html")
-
-####Sem Paths Plot Diagram of SEM Model------------
-#path plot for first sem
-ly = get_layout(sem_fit, 
-                     layout_algorithm = 'layout_with_kk')
-sem_plot = tidySEM::prepare_graph(sem_fit,layout = ly)
-sem_plot <- tidySEM::hide_var(sem_plot)
-
-gg_sem = plot(sem_plot) + ggtitle('F1 and F1 regressed on engagement + covariates')
-
-ggsave(filename = 'output/figures/SEM_model_diagram.png',plot = gg_sem,dpi = 300,width = 7,height = 5,units = 'in')
-
-#second sem model
-ly2 = get_layout(sem_fit2, 
-                layout_algorithm = 'layout_with_kk')
-sem_plot2 = tidySEM::prepare_graph(sem_fit2,layout = ly2)
-sem_plot2 <- tidySEM::hide_var(sem_plot2)
-
-gg_sem2 = plot(sem_plot2) + ggtitle('F1 and F1 regressed on engagement + covariates')
-
-ggsave(filename = 'output/figures/SEM_model_diagram2.png',plot = gg_sem2,dpi = 300,width = 7,height = 5,units = 'in')
-
-#third sem model 
-ly3 = get_layout(sem_fit3, 
-                 layout_algorithm = 'layout_with_kk')
-sem_plot3 = tidySEM::prepare_graph(sem_fit3,layout = ly3)
-sem_plot3 <- tidySEM::hide_var(sem_plot3)
-
-gg_sem3 = plot(sem_plot3) + ggtitle('F1 and F1 regressed on engagement + covariates')
-
-ggsave(filename = 'output/figures/SEM_model_diagram3.png',plot = gg_sem3,dpi = 300,width = 7,height = 5,units = 'in')
-
-####Final SEM Model Redo (all actor types and two latent variables)---------------------
-sem_formfin <- '
-#2 latent variables for engagement
-Engagement  =~  Q32_InfoTypes + Q1_Focus + Q11_STAware + Q11_LTAware + Q19_Sum
-
-Concern =~ Q12_STConcern + Q12_LTConcern + When_SLR
-
-#regression with all actor types (local gov baseline)
-F1 ~ Engagement + Concern + Q4_CBO + Q4_NGO + Q4_Fed + Q4_State + Q4_RegGov + Q4_EnviroSD + Q4_WaterSD + Q4_Ed + Q4_Multijuris + Q4_Multistake + Q4_Political + Q4_Trade + Q4_Enviro + OtherActorType
-F2 ~ Engagement + Concern + Q4_CBO + Q4_NGO + Q4_Fed + Q4_State + Q4_RegGov + Q4_EnviroSD + Q4_WaterSD + Q4_Ed + Q4_Multijuris + Q4_Multistake + Q4_Political + Q4_Trade + Q4_Enviro + OtherActorType
-#resid corrs
-F1~~F2
-'
-
-
-sem_fitfin = sem(sem_formfin,data =  facts)
-
-summary(sem_fitfin,fit.measures = T)
-
-sem_htmlfin <- semTable(sem_fitfin, type="html")
-
-#install.packages("readr")
-library(readr)
-readr::write_file(sem_htmlfin, "output/tables/sem_model_10-18.html")
-
-####Redo Final Model but combine CBO and NGO- final final I think 
+####SEM Model but with CBO and NGO combined
 
 sem_formfin2 <- '
 #2 latent variables for engagement
 Engagement  =~  Q32_InfoTypes + Q1_Focus + Q11_STAware + Q11_LTAware + Q19_percent
-
 Concern =~ Q12_STConcern + Q12_LTConcern + When_SLR
-
 #regression with all actor types (local gov baseline)
 F1 ~ Engagement + Concern + nonprofit + Q4_Fed + Q4_State + Q4_RegGov + Q4_EnviroSD + Q4_WaterSD + Q4_Ed + Q4_Multijuris + Q4_Multistake + Q4_Political + Q4_Trade + Q4_Enviro + OtherActorType
 F2 ~ Engagement + Concern + nonprofit + Q4_Fed + Q4_State + Q4_RegGov + Q4_EnviroSD + Q4_WaterSD + Q4_Ed + Q4_Multijuris + Q4_Multistake + Q4_Political + Q4_Trade + Q4_Enviro + OtherActorType
@@ -664,29 +570,17 @@ library(semTable)
 sem_htmlfin2 <- semTable(sem_fitfin2, type="html")
 #install.packages("readr")
 library(readr)
-readr::write_file(sem_htmlfin2, "output/tables/sem_model_11-4.html")
-
-
-#path plot for final sem
-library(tidySEM)
-lyfin = get_layout(sem_fitfin, 
-                layout_algorithm = 'layout_with_kk')
-sem_plotfin = tidySEM::prepare_graph(sem_fitfin,layout = lyfin)
-sem_plotfin <- tidySEM::hide_var(sem_plotfin)
-
-gg_semfin = plot(sem_plotfin) + ggtitle('F1 and F1 regressed on engagement + concern + covariates')
-
-ggsave(filename = 'output/figures/SEM_final_diagram_11-4.png',plot = gg_sem,dpi = 300,width = 7,height = 5,units = 'in')
-
+readr::write_file(sem_htmlfin2, "output/tables/sem_model_nonprofit_11-28-22.html")
 
 lyfin2 = get_layout(sem_fitfin2, 
-                   layout_algorithm = 'layout_with_kk')
+                    layout_algorithm = 'layout_with_kk')
 sem_plotfin2 = tidySEM::prepare_graph(sem_fitfin2,layout = lyfin2)
 sem_plotfin2 <- tidySEM::hide_var(sem_plotfin2)
 
 gg_semfin2 = plot(sem_plotfin2) + ggtitle('F1 and F1 regressed on engagement + concern + covariates')
 
 ggsave(filename = 'output/figures/SEM_final_diagram_11-2.png',plot = gg_sem,dpi = 300,width = 7,height = 5,units = 'in')
+
 
 
 #Regular OLS
@@ -835,114 +729,8 @@ ggplot(policymatrix_v2, aes(x=reorder(name, value), y=value))+
   ggtitle("Preferred Policy Solutions")+
   theme(plot.title = element_text(hjust = 0.5))
 
-#Figure 4 CFA Plot
-#Fixes- Retitle and Change Labels
-
-facts$ShortTermAware <- facts$Q11_STAware
-facts$LongTermAware <- facts$Q11_LTAware
-facts$CollabActions <- facts$Q19_Sum
-facts$ShortTermConcern <- facts$Q12_STConcern
-facts$LongTermConcern <- facts$Q12_LTConcern
-facts$InfoTypes <- facts$Q32_InfoTypes
-facts$Focus <- facts$Q1_Focus
-
-cfa_form <- '
-Participation =~  InfoTypes + Focus + ShortTermAware + LongTermAware + CollabActions\
-Concern =~ ShortTermConcern + LongTermConcern + When_SLR
-'
-#cfa_fit = cfa(cfa_form,data = facts,ordered = c('Focus','When_SLR','ShortTermAware','LongTermAware','LongTermConcern','ShortTermConcern'))
-cfa_fit = cfa(cfa_form,data = facts)
 
 
-#### THIS IS A GRAPH OF THE CFA FOR ENGAGEMENT
-
-start= get_layout('InfoTypes','Focus','ShortTermAware','LongTermAware','CollabActions',NA,
-                  NA,NA,'Participation','Concern',NA,NA,
-                  NA,NA,'ShortTermConcern','LongTermConcern','When_SLR',NA,rows = 3)
-
-cfa_graph = prepare_graph(cfa_fit,
-                          layout =start)
-cfa_graph = hide_var(cfa_graph)
-
-(gg_cfa = plot(cfa_graph) + 
-    ggtitle('Confirmatory factor analysis of SLR engagement constructs') +
-    coord_flip())
-ggsave(plot = gg_cfa,filename = 'output/figures/cfa_plot_final.png',width = 6,height = 4.5,dpi = 300, units = 'in')
-
-
-#Figure 5 SEM Plot
-#Fixes- Add p value key, change * note symbol for org type
-
-sem_formfin <- '
-#2 latent variables for engagement
-Participation  =~  InfoTypes + Focus + ShortTermAware + LongTermAware + CollabActions
-
-Concern =~ ShortTermConcern + LongTermConcern + When_SLR
-
-#regression with all actor types (local gov baseline)
-F1 ~ Participation + Concern + Q4_CBO + Q4_NGO + Q4_Fed + Q4_State + Q4_RegGov + Q4_EnviroSD + Q4_WaterSD + Q4_Ed + Q4_Multijuris + Q4_Multistake + Q4_Political + Q4_Trade + Q4_Enviro + OtherActorType
-F2 ~ Participation + Concern + Q4_CBO + Q4_NGO + Q4_Fed + Q4_State + Q4_RegGov + Q4_EnviroSD + Q4_WaterSD + Q4_Ed + Q4_Multijuris + Q4_Multistake + Q4_Political + Q4_Trade + Q4_Enviro + OtherActorType
-#resid corrs
-F1~~F2
-'
-sem_fitfin = sem(sem_formfin,data =  facts)
-
-##### there are basically 4 layers, each 9 wide
-start= get_layout(
-  # row 1
-  'Q4_CBO','Q4_NGO','Q4_State','Q4_RegGov','Q4_EnviroSD',
-  'Q4_WaterSD','Q4_Ed','Q4_Trade','OtherActorType',
-  # row 2
-  NA,NA,NA,'F1',NA,NA,'F2',NA,NA,
-  # row 3
-  NA,'Q4_Enviro','Q4_Multijuris',NA,'Participation','Concern',NA,'Q4_Multistake','Q4_Political',
-  # row 4
-  NA,'InfoTypes','Focus','ShortTermAware','LongTermAware',
-  'CollabActions','ShortTermConcern','LongTermConcern','When_SLR',
-  rows = 4)
-
-sem_graph = prepare_graph(sem_fitfin,
-                          layout =start)
-sem_graph = hide_var(sem_graph)
-
-(gg_sem = plot(sem_graph) + 
-    ggtitle('SEM: indicators of policy engagement') + coord_flip())
-
-
-
-start= get_layout(
-  # row 2
-  NA,'F1',NA,'Q4_CBO',NA,'F2',NA,
-  # row 3
-  'InfoTypes',NA,'Participation',NA,'Concern',NA,'When_SLR',
-  # row 4
-  'Focus','ShortTermAware','LongTermAware',
-  'CollabActions',NA,'ShortTermConcern','LongTermConcern',
-  rows = 3)
-
-sem_graph = prepare_graph(sem_fitfin,
-                          layout =start)
-sem_graph = hide_var(sem_graph)
-
-sem_graph$edges[sem_graph$edges$from=='Q4_CBO'&sem_graph$edges$to=='F2',]$label <- '---'
-sem_graph$edges[sem_graph$edges$from=='Q4_CBO'&sem_graph$edges$to=='F1',]$label <- '---'
-
-sem_graph$nodes$label[sem_graph$nodes$label=='Q4_CBO']<-''
-
-(gg_sem = plot(sem_graph) + 
-    #ggplot() + 
-    geom_rect(data = sem_graph$nodes[sem_graph$nodes$label=='',],fill = 'white',
-              linetype = 3,colour = 'black',
-              aes(xmin = node_xmin-0.1,xmax = node_xmax+.1,ymax = node_ymax+0.1,ymin = node_ymin-0.1))+
-    geom_text(data = sem_graph$nodes[sem_graph$nodes$label=='',],
-              aes(label = 'Org. type^',x = x,y = y)) + coord_flip() +
-    annotate('text',x = 2.25,y =6,label = '^ represents 13 org.\ntype indicators',col = 'black') +
-    annotate('text', x=1.25, y=6, label='p-values *<0.05, **<0.01, ***<0.001', col='black')+
-    theme(text = element_text(family = 'Times',size = 12)) +
-    ggtitle('SEM: Engagement and org. type as predictors of factor location')
-) 
-
-ggsave(plot = gg_sem,filename = 'output/figures/sem_plot_stylizedOrgType_edited.png',width = 7,height = 5,dpi = 600, units = 'in')
 
 #Figure 6- Average Location by Org Type
 
