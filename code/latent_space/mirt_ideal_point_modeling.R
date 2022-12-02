@@ -6,9 +6,10 @@ DROP_BARRIERS=T
 
 ### load packages (not all of htese are needed at this point, so shoudl be cleaned up a bit)
 packs =c('reshape2','Hmisc','tidyverse','purrr','data.table','statnet','latentnet','bipartite','lvm4net','mirt','pbapply','Hmisc',
-         'htmlTable','parallel','parallel','semTable','tidySEM','lavaan',
-         'ggthemes','here','ggnetwork','gridExtra','ggrepel','corrplot','htmlTable','readxl','nFactors','ggrepel','plotly','ggalluvial')
-need = packs[!packs %in% names(installed.packages()[,2])]
+         'htmlTable','parallel','parallel','semTable','tidySEM','lavaan','semTable','readr',
+         'ggthemes','here','ggnetwork','gridExtra','ggrepel','corrplot','readxl','nFactors','ggrepel','plotly','ggalluvial')
+need = packs[!packs %in% names(installed.packages()[,2])] #install.packages("readr")
+
 invisible(sapply(need,function(x) suppressMessages(install.packages(x,type= 'source'))))
 invisible(sapply(packs,function(x) suppressMessages(library(x,character.only = T))))
 
@@ -221,7 +222,7 @@ gg1 = ggplot(rotated.factors[order(-F1)]) +
   scale_x_continuous(name = 'Factor loading' ) + 
   ggtitle('Single dimension item discrimination')
 
-ggsave(filename = 'output/figures/figure_1d_discrimination.png',plot = gg1,width = 4.5,height = 4.5, units = 'in',dpi = 350)
+ggsave(filename = 'output/figures/discrimination_1d.png',plot = gg1,width = 4.5,height = 4.5, units = 'in',dpi = 350)
 
 #make a data.table of item factor scores for d = 2
 rotated.factors = data.table(mirt::summary(mods[[2]],'oblimin')$rotF,item = colnames(Y))
@@ -245,7 +246,7 @@ gg2 = ggplot(rotated.factors)+
   scale_x_continuous(name = 'Factor loading, Social Dimension' ) + 
   ggtitle('Bi-dimensional Model of Policy Preferences') 
 
-ggsave(filename = 'output/figures/figure_factor_loadings.png',plot = gg2,width = 7,height = 5.5, units = 'in',dpi = 350)
+ggsave(filename = 'output/figures/figure2_factor_loadings.png',plot = gg2,width = 7,height = 5.5, units = 'in',dpi = 350)
 #plot item and respondent locations for d = 2 model
 gg3<-ggplot() + 
   geom_point(aes(x = F1,y = F2,col = 'red'),data = rotated.factors,pch = 17,size = 2)+
@@ -260,7 +261,7 @@ gg3<-ggplot() +
   guides(color = guide_legend(override.aes = list(shape=c(1, 24), fill=c('white', 'red'))))
 
 
-ggsave(filename = 'output/figures/figure_respondent_and_item_locations.png',plot = gg3,width = 7,height = 5.5, units = 'in',dpi = 350)
+ggsave(filename = 'output/figures/figure3_respondent_and_item_locations.png',plot = gg3,width = 7,height = 5.5, units = 'in',dpi = 350)
 #
 # compute correlations between factors scores and select variables
 # note still need to find a good way to test correlation significance without having to run cor.test a bunch of times
@@ -285,7 +286,7 @@ temp_tab <- data.table(item = varlist,
                        F2 = paste0(est2,ifelse(p2<0.05,'*',ifelse(p2<0.01,'**',ifelse(p2<0.001,'***','')))))
 stargazer::stargazer(temp_tab,
            summary = F,
-           out = 'output/tables/correlation_tests.html')
+           out = 'output/tables/tableA4_correlation_tests.html')
 
 
 
@@ -297,7 +298,7 @@ library(data.table)
 setnames(corrsdata, old = c("F1", "F2", "Q1_Focus", "When_SLR", "Q16_Risk_Agree", "Q17_Action_Agree", "Q4_Fed","Q4_State", "Q4_RegGov", "Q4_LocalGov", "Q4_WaterSD", "Q4_EnviroSD", "Q4_Enviro", "Q4_Trade", "Q4_Ed", "Q4_Multistake", "Q4_Multijuris", "Q4_Political", "Q4_CBO", "Q4_NGO", "Q8_JobTasks", "Q32_InfoTypes", "Q11_STAware", "Q11_LTAware", "Q12_STConcern", "Q12_LTConcern", "Q20_HumRes", "Q20_FinRes", "Q20_ExpCollab", "Q20_StakeOpp", "Q20_PolLead", "Q20_SLRUncertain", "Q20_SciInfo", "Q20_OrgLead", "Q20_OverallPlan", "Q20_Permits","Q20_PubSupport", "Q20_CBORelation", "Q20_Sum"), new = c("F1", "F2", "Focus", "When_SLR", "Risk_Agree", "Action_Agree", "Fed","State", "RegGov", "LocalGov", "WaterSD", "EnviroSD", "Enviro", "Trade", "Ed", "Multistake", "Multijuris", "Political", "CBO", "NGO", "Tasks", "InfoTypes", "STAware", "LTAware", "STConcern", "LTConcern", "HumRes", "FinRes", "CollabExp", "PublicOppose", "PoliticalLead", "SLRUncertain", "SciInfo", "OrgLead", "OverallPlan", "Permits","PubSupport", "CBORelations", "No.Barriers"))
 
 corrs <- cor(corrsdata)
-png(filename='output/figures/figure_corrplot_11-28-22.png')
+png(filename='output/figures/figureA1_corrplot.png')
 corrplot(corrs, method='color')
 dev.off()
 corrplot(corrs, method='circle')
@@ -389,51 +390,48 @@ facts$Q19_percent <- facts$Q19_Sum/15
 facts$When_SLR = facts$When_SLR * -1
 
 
-cfa_form <- '
-Participation  =~  Q32_InfoTypes + Q1_Focus + Q11_STAware + Q11_LTAware + Q19_Sum\
-Concern =~ Q12_STConcern + Q12_LTConcern + When_SLR
-'
+#cfa_form <- '
+#Participation  =~  Q32_InfoTypes + Q1_Focus + Q11_STAware + Q11_LTAware + Q19_Sum
+#Concern =~ Q12_STConcern + Q12_LTConcern + When_SLR
+#'
 #cfa_fit = cfa(cfa_form,data = facts,ordered = c('Q1_Focus','When_SLR','Q11_STAware','Q11_LTAware','Q12_LTConcern','Q12_STConcern'))
-cfa_fit = cfa(cfa_form,data = facts)
-
+#cfa_fit = cfa(cfa_form,data = facts)
 
 #### THIS IS A GRAPH OF THE CFA FOR ENGAGEMENT
 
-start= get_layout('Q32_InfoTypes','Q1_Focus','Q11_STAware','Q11_LTAware','Q19_Sum',NA,
-NA,NA,'Participation','Concern',NA,NA,
-NA,NA,'Q12_STConcern','Q12_LTConcern','When_SLR',NA,rows = 3)
+# start= get_layout('Q32_InfoTypes','Q1_Focus','Q11_STAware','Q11_LTAware','Q19_Sum',NA,
+# NA,NA,'Participation','Concern',NA,NA,
+# NA,NA,'Q12_STConcern','Q12_LTConcern','When_SLR',NA,rows = 3)
 
-cfa_graph = prepare_graph(cfa_fit,
-                          layout =start)
-cfa_graph = hide_var(cfa_graph)
-
-(gg_cfa = plot(cfa_graph) + 
-  ggtitle('Confirmatory factor analysis: indicators of policy engagement') +
-  coord_flip())
-ggsave(plot = gg_cfa,filename = 'output/figures/cfa_plot.png',width = 6,height = 4.5,dpi = 300, units = 'in')
-
-fitmeasures(cfa_fit)
-
-###Graph of CFA for engagement with Q19 percent instead of sum
-cfa_form2 <- '
-Participation  =~  Q32_InfoTypes + Q1_Focus + Q11_STAware + Q11_LTAware + Q19_percent\
-Concern =~ Q12_STConcern + Q12_LTConcern + When_SLR
-'
-cfa_fit2 = cfa(cfa_form2,data = facts)
-start2= get_layout('Q32_InfoTypes','Q1_Focus','Q11_STAware','Q11_LTAware','Q19_percent',NA,
-                  NA,NA,'Participation','Concern',NA,NA,
-                  NA,NA,'Q12_STConcern','Q12_LTConcern','When_SLR',NA,rows = 3)
-
-cfa_graph2 = prepare_graph(cfa_fit2,
-                          layout =start2)
-cfa_graph2 = hide_var(cfa_graph2)
-
-(gg_cfa2 = plot(cfa_graph2) + 
-    ggtitle('Confirmatory factor analysis: indicators of policy engagement') +
-    coord_flip())
-ggsave(plot = gg_cfa2,filename = 'output/figures/cfa_plot_V2.png',width = 6,height = 4.5,dpi = 300, units = 'in')
-
-
+# cfa_graph = prepare_graph(cfa_fit,
+#                           layout =start)
+# cfa_graph = hide_var(cfa_graph)
+# 
+# (gg_cfa = plot(cfa_graph) + 
+#   ggtitle('Confirmatory factor analysis: indicators of policy engagement') +
+#   coord_flip())
+# ggsave(plot = gg_cfa,filename = 'output/figures/cfa_plot.png',width = 6,height = 4.5,dpi = 300, units = 'in')
+# 
+# fitmeasures(cfa_fit)
+# 
+# ###Graph of CFA for engagement with Q19 percent instead of sum
+# cfa_form2 <- '
+# Participation  =~  Q32_InfoTypes + Q1_Focus + Q11_STAware + Q11_LTAware + Q19_percent\
+# Concern =~ Q12_STConcern + Q12_LTConcern + When_SLR
+# '
+# cfa_fit2 = cfa(cfa_form2,data = facts)
+# start2= get_layout('Q32_InfoTypes','Q1_Focus','Q11_STAware','Q11_LTAware','Q19_percent',NA,
+#                   NA,NA,'Participation','Concern',NA,NA,
+#                   NA,NA,'Q12_STConcern','Q12_LTConcern','When_SLR',NA,rows = 3)
+# 
+# cfa_graph2 = prepare_graph(cfa_fit2,
+#                           layout =start2)
+# cfa_graph2 = hide_var(cfa_graph2)
+# 
+# (gg_cfa2 = plot(cfa_graph2) + 
+#     ggtitle('Confirmatory factor analysis: indicators of policy engagement') +
+#     coord_flip())
+# ggsave(plot = gg_cfa2,filename = 'output/figures/cfa_plot_V2.png',width = 6,height = 4.5,dpi = 300, units = 'in')
 
 #Figure 4 CFA Plot Fixes- Retitle and Change Labels
 
@@ -452,6 +450,7 @@ Concern =~ ShortTermConcern + LongTermConcern + When_SLR
 #cfa_fit = cfa(cfa_form,data = facts,ordered = c('Focus','When_SLR','ShortTermAware','LongTermAware','LongTermConcern','ShortTermConcern'))
 cfa_fit = cfa(cfa_form,data = facts)
 
+semTable(cfa_fit,file = 'output/tables/tableA2_cfa_summary.html')
 
 #### THIS IS A GRAPH OF THE CFA FOR ENGAGEMENT
 
@@ -466,120 +465,201 @@ cfa_graph = hide_var(cfa_graph)
 (gg_cfa = plot(cfa_graph) + 
     ggtitle('Confirmatory factor analysis of SLR engagement constructs') +
     coord_flip())
-ggsave(plot = gg_cfa,filename = 'output/figures/cfa_plot_final.png',width = 6,height = 4.5,dpi = 300, units = 'in')
+ggsave(plot = gg_cfa,filename = 'output/figures/figure3_cfa_plot.png',width = 6,height = 4.5,dpi = 300, units = 'in')
 
 
 ####SEM Model (all actor types and two latent variables)---------------------
-
-
-####SEM Model ------------
-
+# 
+# ####SEM Model ------------
+# sem_formfin <- '
+# #2 latent variables for engagement
+# Participation  =~  InfoTypes + Focus + ShortTermAware + LongTermAware + CollabActions
+# Concern =~ ShortTermConcern + LongTermConcern + When_SLR
+# #regression with all actor types (local gov baseline)
+# F1 ~ Participation + Concern + Q4_CBO + Q4_NGO + Q4_Fed + Q4_State + Q4_RegGov + Q4_EnviroSD + Q4_WaterSD + Q4_Ed + Q4_Multijuris + Q4_Multistake + Q4_Political + Q4_Trade + Q4_Enviro + OtherActorType
+# F2 ~ Participation + Concern + Q4_CBO + Q4_NGO + Q4_Fed + Q4_State + Q4_RegGov + Q4_EnviroSD + Q4_WaterSD + Q4_Ed + Q4_Multijuris + Q4_Multistake + Q4_Political + Q4_Trade + Q4_Enviro + OtherActorType
+# #resid corrs
+# F1~~F2
+# '
+# sem_fitfin = sem(sem_formfin,data =  facts)
+# 
+# ##### there are basically 4 layers, each 9 wide
+# start= get_layout(
+#   # row 1
+#   'Q4_CBO','Q4_NGO','Q4_State','Q4_RegGov','Q4_EnviroSD',
+#   'Q4_WaterSD','Q4_Ed','Q4_Trade','OtherActorType',
+#   # row 2
+#   NA,NA,NA,'F1',NA,NA,'F2',NA,NA,
+#   # row 3
+#   NA,'Q4_Enviro','Q4_Multijuris',NA,'Participation','Concern',NA,'Q4_Multistake','Q4_Political',
+#   # row 4
+#   NA,'InfoTypes','Focus','ShortTermAware','LongTermAware',
+#   'CollabActions','ShortTermConcern','LongTermConcern','When_SLR',
+#   rows = 4)
+# 
+# sem_graph = prepare_graph(sem_fitfin,
+#                           layout =start)
+# sem_graph = hide_var(sem_graph)
+# 
+# (gg_sem = plot(sem_graph) + 
+#     ggtitle('SEM: indicators of policy engagement') + 
+#     coord_flip())
+# 
+# 
+# 
+# start= get_layout(
+#   # row 2
+#   NA,'F1',NA,'Q4_CBO',NA,'F2',NA,
+#   # row 3
+#   'InfoTypes',NA,'Participation',NA,'Concern',NA,'When_SLR',
+#   # row 4
+#   'Focus','ShortTermAware','LongTermAware',
+#   'CollabActions',NA,'ShortTermConcern','LongTermConcern',
+#   rows = 3)
+# 
+# sem_graph = prepare_graph(sem_fitfin,
+#                           layout =start)
+# sem_graph = hide_var(sem_graph)
+# 
+# sem_graph$edges[sem_graph$edges$from=='Q4_CBO'&sem_graph$edges$to=='F2',]$label <- '---'
+# sem_graph$edges[sem_graph$edges$from=='Q4_CBO'&sem_graph$edges$to=='F1',]$label <- '---'
+# 
+# sem_graph$nodes$label[sem_graph$nodes$label=='Q4_CBO']<-''
+# 
+# (gg_sem = plot(sem_graph) + 
+#     #ggplot() + 
+#     geom_rect(data = sem_graph$nodes[sem_graph$nodes$label=='',],fill = 'white',
+#               linetype = 3,colour = 'black',
+#               aes(xmin = node_xmin-0.1,xmax = node_xmax+.1,ymax = node_ymax+0.1,ymin = node_ymin-0.1))+
+#     geom_text(data = sem_graph$nodes[sem_graph$nodes$label=='',],
+#               aes(label = 'Org. type^',x = x,y = y)) + coord_flip() +
+#     annotate('text',x = 2.25,y =6,label = '^ represents 13 org.\ntype indicators',col = 'black') +
+#     annotate('text', x=1.25, y=6, label='p-values *<0.05, **<0.01, ***<0.001', col='black')+
+#     theme(text = element_text(family = 'Times',size = 12)) +
+#     ggtitle('SEM: Engagement and org. type as predictors of factor location')
+# ) 
+# 
+# ggsave(plot = gg_sem,filename = 'output/figures/figure4_sem_plot.png',width = 7,height = 5,dpi = 600, units = 'in')
+# 
+# sem_html <- semTable(sem_fitfin, type="html")
+# #install.packages("readr")
+# library(readr)
+# readr::write_file(sem_html, "output/tables/sem_model_table.html")
+# 
+####SEM Model but with CBO and NGO combined
 sem_formfin <- '
 #2 latent variables for engagement
-Participation  =~  InfoTypes + Focus + ShortTermAware + LongTermAware + CollabActions
+Participation =~  InfoTypes + Focus + ShortTermAware + LongTermAware + CollabActions
 Concern =~ ShortTermConcern + LongTermConcern + When_SLR
 #regression with all actor types (local gov baseline)
-F1 ~ Participation + Concern + Q4_CBO + Q4_NGO + Q4_Fed + Q4_State + Q4_RegGov + Q4_EnviroSD + Q4_WaterSD + Q4_Ed + Q4_Multijuris + Q4_Multistake + Q4_Political + Q4_Trade + Q4_Enviro + OtherActorType
-F2 ~ Participation + Concern + Q4_CBO + Q4_NGO + Q4_Fed + Q4_State + Q4_RegGov + Q4_EnviroSD + Q4_WaterSD + Q4_Ed + Q4_Multijuris + Q4_Multistake + Q4_Political + Q4_Trade + Q4_Enviro + OtherActorType
+F1 ~ Participation + Concern + nonprofit + Q4_Fed + Q4_State + Q4_RegGov + Q4_EnviroSD + Q4_WaterSD + Q4_Ed + Q4_Multijuris + Q4_Multistake + Q4_Political + Q4_Trade + Q4_Enviro + OtherActorType
+F2 ~ Participation + Concern + nonprofit + Q4_Fed + Q4_State + Q4_RegGov + Q4_EnviroSD + Q4_WaterSD + Q4_Ed + Q4_Multijuris + Q4_Multistake + Q4_Political + Q4_Trade + Q4_Enviro + OtherActorType
 #resid corrs
 F1~~F2
 '
+
 sem_fitfin = sem(sem_formfin,data =  facts)
 
-##### there are basically 4 layers, each 9 wide
-start= get_layout(
-  # row 1
-  'Q4_CBO','Q4_NGO','Q4_State','Q4_RegGov','Q4_EnviroSD',
-  'Q4_WaterSD','Q4_Ed','Q4_Trade','OtherActorType',
-  # row 2
-  NA,NA,NA,'F1',NA,NA,'F2',NA,NA,
-  # row 3
-  NA,'Q4_Enviro','Q4_Multijuris',NA,'Participation','Concern',NA,'Q4_Multistake','Q4_Political',
-  # row 4
-  NA,'InfoTypes','Focus','ShortTermAware','LongTermAware',
-  'CollabActions','ShortTermConcern','LongTermConcern','When_SLR',
-  rows = 4)
+summary(sem_fitfin,fit.measures = T)
 
-sem_graph = prepare_graph(sem_fitfin,
-                          layout =start)
-sem_graph = hide_var(sem_graph)
-
-(gg_sem = plot(sem_graph) + 
-    ggtitle('SEM: indicators of policy engagement') + coord_flip())
-
-
-
-start= get_layout(
-  # row 2
-  NA,'F1',NA,'Q4_CBO',NA,'F2',NA,
-  # row 3
-  'InfoTypes',NA,'Participation',NA,'Concern',NA,'When_SLR',
-  # row 4
-  'Focus','ShortTermAware','LongTermAware',
-  'CollabActions',NA,'ShortTermConcern','LongTermConcern',
-  rows = 3)
-
-sem_graph = prepare_graph(sem_fitfin,
-                          layout =start)
-sem_graph = hide_var(sem_graph)
-
-sem_graph$edges[sem_graph$edges$from=='Q4_CBO'&sem_graph$edges$to=='F2',]$label <- '---'
-sem_graph$edges[sem_graph$edges$from=='Q4_CBO'&sem_graph$edges$to=='F1',]$label <- '---'
-
-sem_graph$nodes$label[sem_graph$nodes$label=='Q4_CBO']<-''
-
-(gg_sem = plot(sem_graph) + 
-    #ggplot() + 
-    geom_rect(data = sem_graph$nodes[sem_graph$nodes$label=='',],fill = 'white',
-              linetype = 3,colour = 'black',
-              aes(xmin = node_xmin-0.1,xmax = node_xmax+.1,ymax = node_ymax+0.1,ymin = node_ymin-0.1))+
-    geom_text(data = sem_graph$nodes[sem_graph$nodes$label=='',],
-              aes(label = 'Org. type^',x = x,y = y)) + coord_flip() +
-    annotate('text',x = 2.25,y =6,label = '^ represents 13 org.\ntype indicators',col = 'black') +
-    annotate('text', x=1.25, y=6, label='p-values *<0.05, **<0.01, ***<0.001', col='black')+
-    theme(text = element_text(family = 'Times',size = 12)) +
-    ggtitle('SEM: Engagement and org. type as predictors of factor location')
-) 
-
-ggsave(plot = gg_sem,filename = 'output/figures/sem_plot_11-28-22.png',width = 7,height = 5,dpi = 600, units = 'in')
-
-sem_html <- semTable(sem_fitfin, type="html")
-#install.packages("readr")
-library(readr)
-readr::write_file(sem_html, "output/tables/sem_model_11-28-22.html")
-
-
-
-####SEM Model but with CBO and NGO combined
-
-sem_formfin2 <- '
-#2 latent variables for engagement
-Engagement  =~  Q32_InfoTypes + Q1_Focus + Q11_STAware + Q11_LTAware + Q19_percent
-Concern =~ Q12_STConcern + Q12_LTConcern + When_SLR
-#regression with all actor types (local gov baseline)
-F1 ~ Engagement + Concern + nonprofit + Q4_Fed + Q4_State + Q4_RegGov + Q4_EnviroSD + Q4_WaterSD + Q4_Ed + Q4_Multijuris + Q4_Multistake + Q4_Political + Q4_Trade + Q4_Enviro + OtherActorType
-F2 ~ Engagement + Concern + nonprofit + Q4_Fed + Q4_State + Q4_RegGov + Q4_EnviroSD + Q4_WaterSD + Q4_Ed + Q4_Multijuris + Q4_Multistake + Q4_Political + Q4_Trade + Q4_Enviro + OtherActorType
-#resid corrs
-F1~~F2
-'
-
-sem_fitfin2 = sem(sem_formfin2,data =  facts)
-
-summary(sem_fitfin2,fit.measures = T)
-library(semTable)
 sem_htmlfin2 <- semTable(sem_fitfin2, type="html")
-#install.packages("readr")
-library(readr)
-readr::write_file(sem_htmlfin2, "output/tables/sem_model_nonprofit_11-28-22.html")
 
-lyfin2 = get_layout(sem_fitfin2, 
-                    layout_algorithm = 'layout_with_kk')
-sem_plotfin2 = tidySEM::prepare_graph(sem_fitfin2,layout = lyfin2)
-sem_plotfin2 <- tidySEM::hide_var(sem_plotfin2)
+readr::write_file(sem_htmlfin2, "output/tables/tableA3_sem_model_nonprofit.html")
 
-gg_semfin2 = plot(sem_plotfin2) + ggtitle('F1 and F1 regressed on engagement + concern + covariates')
+ start= get_layout(
+   # row 2
+   NA,'F1',NA,'nonprofit',NA,'F2',NA,
+   # row 3
+   'InfoTypes',NA,'Participation',NA,'Concern',NA,'When_SLR',
+#   # row 4
+   'Focus','ShortTermAware','LongTermAware',
+   'CollabActions',NA,'ShortTermConcern','LongTermConcern',
+   rows = 3)
 
-ggsave(filename = 'output/figures/SEM_final_diagram_11-2.png',plot = gg_sem,dpi = 300,width = 7,height = 5,units = 'in')
+sem_graph = prepare_graph(sem_fitfin,layout =start)
+plot(sem_graph)
+sem_graph = hide_var(sem_graph)
+# 
+sem_graph$edges[sem_graph$edges$from=='nonprofit'&sem_graph$edges$to=='F2',]$label <- '---'
+sem_graph$edges[sem_graph$edges$from=='nonprofit'&sem_graph$edges$to=='F1',]$label <- '---'
+# 
+sem_graph$nodes$label[sem_graph$nodes$label=='nonprofit']<-''
+# 
+
+(gg_sem = plot(sem_graph) +
+     geom_rect(data = sem_graph$nodes[sem_graph$nodes$label=='',],fill = 'white',
+               linetype = 3,colour = 'black',
+              aes(xmin = node_xmin-0.1,xmax = node_xmax+.1,ymax = node_ymax+0.1,ymin = node_ymin-0.1))+
+     geom_text(data = sem_graph$nodes[sem_graph$nodes$label=='',],
+               aes(label = 'Org. type^',x = x,y = y)) + coord_flip() +
+     annotate('text',x = 2.25,y =6,label = '^ represents 13 org.\ntype indicators',col = 'black') +
+     annotate('text', x=1.25, y=6, label='p-values *<0.05, **<0.01, ***<0.001', col='black')+
+     theme(text = element_text(family = 'Times',size = 12)) +
+     ggtitle('SEM: Engagement and org. type as predictors of factor location')
+ ) 
+
+
+ggsave(filename = 'output/figures/figure5_SEM_diagram.png',plot = gg_sem,dpi = 300,width = 7,height = 5,units = 'in')
+
+
+#Figure 6- Average Location by Org Type
+
+#Average F1 and F2 for Fed
+facts %>%
+  group_by(Q4_Fed) %>%
+  dplyr::summarize(Mean = mean(F1, na.rm=TRUE))
+
+facts %>%
+  group_by(Q4_Fed) %>%
+  dplyr::summarize(Mean = mean(F2, na.rm=TRUE))
+
+#Average F1 and F2 for Local Gov
+facts %>%
+  group_by(Q4_LocalGov) %>%
+  dplyr::summarize(Mean = mean(F1, na.rm=TRUE))
+
+facts %>%
+  group_by(Q4_LocalGov) %>%
+  dplyr::summarize(Mean = mean(F2, na.rm=TRUE))
+
+#Average F1 and F2 for Enviro SD
+facts %>%
+  group_by(Q4_EnviroSD) %>%
+  dplyr::summarize(Mean = mean(F1, na.rm=TRUE))
+
+facts %>%
+  group_by(Q4_EnviroSD) %>%
+  dplyr::summarize(Mean = mean(F2, na.rm=TRUE))
+
+#Average F1 and F2 for Nonprofit
+facts %>%
+  group_by(nonprofit) %>%
+  dplyr::summarize(Mean = mean(F1, na.rm=TRUE))
+
+facts %>%
+  group_by(nonprofit) %>%
+  dplyr::summarize(Mean = mean(F2, na.rm=TRUE))
+
+SigOrgType <- c("Local Gov", "Nonprofit", "Fed Gov", "Enviro SD")
+AvgF1_OrgType <- c(0.0548, -0.479, -0.0613, 0.242)
+AvgF2_OrgType <- c(0.0804, -0.209, -0.516, -0.476)
+
+AvgFactors_OrgType <- cbind(SigOrgType, AvgF1_OrgType, AvgF2_OrgType)
+AvgFactors_OrgType <- as.data.frame(AvgFactors_OrgType)
+
+
+(AvgFact_OrgTypeFig<-ggplot()+ 
+    geom_point(data = rotated.factors,col = 'grey50',aes(y =F2,x = F1,shape = type)) + 
+    geom_text_repel(col = 'grey50',data = rotated.factors,aes(y =F2,x = F1,label = item),max.overlaps = 30) + 
+    geom_point(data = AvgFactors_OrgType, shape = 15,aes(x=as.numeric(AvgF1_OrgType), y=as.numeric(AvgF2_OrgType)))+
+    ggrepel::geom_label_repel(data=AvgFactors_OrgType, aes(label=SigOrgType,x=as.numeric(AvgF1_OrgType), y=as.numeric(AvgF2_OrgType)),min.segment.length = 0.2)+
+    xlab('Social Dimension Factor Score') + ylab("Environmental Dimension Factor Score") + 
+    theme(legend.position = c(0.2,0.2))+
+    scale_shape_discrete(name = 'item type',labels = c('problem','solution'),solid = F)+
+    ggtitle('Average ideal points for actors by organization type','overlaid on item factor scores'))
+
+ggsave(plot = AvgFact_OrgTypeFig,filename = 'output/figures/figure6_avgFscores_orgtype.png',width = 7,height = 7,dpi = 600, units = 'in')
+
 
 
 
@@ -593,77 +673,74 @@ library(stargazer)
 stargazer(ols1, ols2)
 
 
-
-#SUR
-#install.packages("systemfit")
-#initial regression
-library(systemfit)
-r1 <- F1~Q1_Focus+Q32_InfoTypes+When_SLR+aware+concern+nonprofit+govagency+Q4_RegGov+Q4_LocalGov
-r2 <- F2~Q1_Focus+Q32_InfoTypes+When_SLR+aware+concern+nonprofit+govagency+Q4_RegGov+Q4_LocalGov
-fitsur <-systemfit(list(f1reg=r1, f2reg=r2), data=facts)
-summary(fitsur)
-
-#regression without awareness
-r1.2 <- F1~Q1_Focus+Q32_InfoTypes+When_SLR+concern+nonprofit+govagency+Q4_RegGov+Q4_LocalGov
-r2.2 <- F2~Q1_Focus+Q32_InfoTypes+When_SLR+concern+nonprofit+govagency+Q4_RegGov+Q4_LocalGov
-fitsur2 <-systemfit(list(f1reg=r1.2, f2reg=r2.2), data=facts)
-summary(fitsur2)
-
-#regression with awareness and info types interaction
-r1.3 <- F1~Q1_Focus+Q32_InfoTypes*aware+When_SLR+concern+nonprofit+govagency+Q4_RegGov+Q4_LocalGov
-r2.3 <- F2~Q1_Focus+Q32_InfoTypes*aware+When_SLR+concern+nonprofit+govagency+Q4_RegGov+Q4_LocalGov
-fitsur3 <-systemfit(list(f1reg=r1.3, f2reg=r2.3), data=facts)
-summary(fitsur3)
-
-#regression with awareness and concern interaction
-r1.4 <- F1~Q1_Focus+Q32_InfoTypes+aware*concern+When_SLR+nonprofit+govagency+Q4_RegGov+Q4_LocalGov
-r2.4 <- F2~Q1_Focus+Q32_InfoTypes+aware*concern+When_SLR+nonprofit+govagency+Q4_RegGov+Q4_LocalGov
-fitsur4 <- systemfit(list(f1reg=r1.4, f2reg=r2.4), data=facts)
-summary(fitsur4)
-
-#install.packages("texreg")
-library(texreg)
-texreg(list(fitsur))
-texreg(list(fitsur2))
-texreg(list(fitsur3))
-texreg(list(fitsur4))
-
-htmlreg(list(fitsur), file='output/tables/table_SURresults.html')
-
-#Correlations with new variables
-cor(facts$F1, facts$govagency)
-
-cor.test(facts$F1, facts$govagency)
-cor.test(facts$F1, facts$aware)
-cor.test(facts$F1, facts$concern)
-cor.test(facts$F1, facts$nonprofit)
-
-cor.test(facts$F2, facts$govagency)
-cor.test(facts$F2, facts$aware)
-cor.test(facts$F2, facts$concern)
-cor.test(facts$F2, facts$nonprofit)
-
-corrsdata2 <- subset(facts,select=c("F1", "F2", "Q1_Focus", "When_SLR", "Q16_Risk_Agree", "Q17_Action_Agree", "govagency", "Q4_RegGov", "Q4_LocalGov", "Q4_WaterSD", "Q4_EnviroSD", "Q4_Enviro", "Q4_Trade", "Q4_Ed", "Q4_Multistake", "Q4_Multijuris", "Q4_Political", "nonprofit", "Q8_JobTasks", "Q32_InfoTypes", "aware", "concern"))
-
-
-setnames(corrsdata2, old = c("F1", "F2", "Q1_Focus", "When_SLR", "Q16_Risk_Agree", "Q17_Action_Agree", "govagency", "Q4_RegGov", "Q4_LocalGov", "Q4_WaterSD", "Q4_EnviroSD", "Q4_Enviro", "Q4_Trade", "Q4_Ed", "Q4_Multistake", "Q4_Multijuris", "Q4_Political", "nonprofit", "Q8_JobTasks", "Q32_InfoTypes", "aware", "concern"), new = c("F1", "F2", "Focus", "When_SLR", "Risk_Agree", "Action_Agree", "Fed State Gov", "RegGov", "LocalGov", "WaterSD", "EnviroSD", "Enviro", "Trade", "Ed", "Multistake", "Multijuris", "Political", "Nonprofit", "Tasks", "InfoTypes", "Awareness", "Concern"))
-
-corrs2 <- cor(corrsdata2)
-corrplot(corrs2, method='color')
-corrplot(corrs2, method='circle')
+# 
+# #SUR
+# #install.packages("systemfit")
+# #initial regression
+# library(systemfit)
+# r1 <- F1~Q1_Focus+Q32_InfoTypes+When_SLR+aware+concern+nonprofit+govagency+Q4_RegGov+Q4_LocalGov
+# r2 <- F2~Q1_Focus+Q32_InfoTypes+When_SLR+aware+concern+nonprofit+govagency+Q4_RegGov+Q4_LocalGov
+# fitsur <-systemfit(list(f1reg=r1, f2reg=r2), data=facts)
+# summary(fitsur)
+# 
+# #regression without awareness
+# r1.2 <- F1~Q1_Focus+Q32_InfoTypes+When_SLR+concern+nonprofit+govagency+Q4_RegGov+Q4_LocalGov
+# r2.2 <- F2~Q1_Focus+Q32_InfoTypes+When_SLR+concern+nonprofit+govagency+Q4_RegGov+Q4_LocalGov
+# fitsur2 <-systemfit(list(f1reg=r1.2, f2reg=r2.2), data=facts)
+# summary(fitsur2)
+# 
+# #regression with awareness and info types interaction
+# r1.3 <- F1~Q1_Focus+Q32_InfoTypes*aware+When_SLR+concern+nonprofit+govagency+Q4_RegGov+Q4_LocalGov
+# r2.3 <- F2~Q1_Focus+Q32_InfoTypes*aware+When_SLR+concern+nonprofit+govagency+Q4_RegGov+Q4_LocalGov
+# fitsur3 <-systemfit(list(f1reg=r1.3, f2reg=r2.3), data=facts)
+# summary(fitsur3)
+# 
+# #regression with awareness and concern interaction
+# r1.4 <- F1~Q1_Focus+Q32_InfoTypes+aware*concern+When_SLR+nonprofit+govagency+Q4_RegGov+Q4_LocalGov
+# r2.4 <- F2~Q1_Focus+Q32_InfoTypes+aware*concern+When_SLR+nonprofit+govagency+Q4_RegGov+Q4_LocalGov
+# fitsur4 <- systemfit(list(f1reg=r1.4, f2reg=r2.4), data=facts)
+# summary(fitsur4)
+# 
+# #install.packages("texreg")
+# library(texreg)
+# texreg(list(fitsur))
+# texreg(list(fitsur2))
+# texreg(list(fitsur3))
+# texreg(list(fitsur4))
+# 
+# htmlreg(list(fitsur), file='output/tables/table_SURresults.html')
+# 
+# #Correlations with new variables
+# cor(facts$F1, facts$govagency)
+# 
+# cor.test(facts$F1, facts$govagency)
+# cor.test(facts$F1, facts$aware)
+# cor.test(facts$F1, facts$concern)
+# cor.test(facts$F1, facts$nonprofit)
+# 
+# cor.test(facts$F2, facts$govagency)
+# cor.test(facts$F2, facts$aware)
+# cor.test(facts$F2, facts$concern)
+# cor.test(facts$F2, facts$nonprofit)
+# 
+# corrsdata2 <- subset(facts,select=c("F1", "F2", "Q1_Focus", "When_SLR", "Q16_Risk_Agree", "Q17_Action_Agree", "govagency", "Q4_RegGov", "Q4_LocalGov", "Q4_WaterSD", "Q4_EnviroSD", "Q4_Enviro", "Q4_Trade", "Q4_Ed", "Q4_Multistake", "Q4_Multijuris", "Q4_Political", "nonprofit", "Q8_JobTasks", "Q32_InfoTypes", "aware", "concern"))
+# 
+# 
+# setnames(corrsdata2, old = c("F1", "F2", "Q1_Focus", "When_SLR", "Q16_Risk_Agree", "Q17_Action_Agree", "govagency", "Q4_RegGov", "Q4_LocalGov", "Q4_WaterSD", "Q4_EnviroSD", "Q4_Enviro", "Q4_Trade", "Q4_Ed", "Q4_Multistake", "Q4_Multijuris", "Q4_Political", "nonprofit", "Q8_JobTasks", "Q32_InfoTypes", "aware", "concern"), new = c("F1", "F2", "Focus", "When_SLR", "Risk_Agree", "Action_Agree", "Fed State Gov", "RegGov", "LocalGov", "WaterSD", "EnviroSD", "Enviro", "Trade", "Ed", "Multistake", "Multijuris", "Political", "Nonprofit", "Tasks", "InfoTypes", "Awareness", "Concern"))
+# 
+# corrs2 <- cor(corrsdata2)
+# corrplot(corrs2, method='color')
+# corrplot(corrs2, method='circle')
 
 ####Create Basic Descriptive Figures for Paper--------------------
 #concerns
 allconcerns <-incidence_dt[,c(17:29)]
-
 allconcerns %>%
   summarise_all(sum)
-
 concernsums <- c(434, 137, 393, 41, 227, 128, 24, 315, 51, 36, 88, 81, 21)
 concernnames <- c("Transpo", "Water", "Stormwater Wastewater", "Energy", "Ecosystem", "Erosion", "Commercial", "DACs", "Econ Growth", "Property Value", "Housing", "Public Health", "Other")  
 concernmatrix <- data.frame(name=concernnames, value=concernsums)
 
-ggsave(filename='output/figures/figure_concerns_bar_plot.png', width = 4.5,height = 4.5, dpi = 350)
 ggplot(concernmatrix, aes(x=name, y=value))+
   geom_bar(stat="identity")+
   coord_flip()+
@@ -672,7 +749,7 @@ ggplot(concernmatrix, aes(x=name, y=value))+
         axis.title.y=element_blank())+
   ggtitle("Concerns for SLR Impacts")+
   theme(plot.title = element_text(hjust = 0.5))
-dev.off()
+
 
 #policies
 allpolicies <-incidence_dt[,c(2:16)]
@@ -732,64 +809,6 @@ ggplot(policymatrix_v2, aes(x=reorder(name, value), y=value))+
 
 
 
-#Figure 6- Average Location by Org Type
-
-#Average F1 and F2 for Fed
-facts %>%
-  group_by(Q4_Fed) %>%
-  dplyr::summarize(Mean = mean(F1, na.rm=TRUE))
-
-facts %>%
-  group_by(Q4_Fed) %>%
-  dplyr::summarize(Mean = mean(F2, na.rm=TRUE))
-
-#Average F1 and F2 for Local Gov
-facts %>%
-  group_by(Q4_LocalGov) %>%
-  dplyr::summarize(Mean = mean(F1, na.rm=TRUE))
-
-facts %>%
-  group_by(Q4_LocalGov) %>%
-  dplyr::summarize(Mean = mean(F2, na.rm=TRUE))
-
-#Average F1 and F2 for Enviro SD
-facts %>%
-  group_by(Q4_EnviroSD) %>%
-  dplyr::summarize(Mean = mean(F1, na.rm=TRUE))
-
-facts %>%
-  group_by(Q4_EnviroSD) %>%
-  dplyr::summarize(Mean = mean(F2, na.rm=TRUE))
-
-#Average F1 and F2 for Nonprofit
-facts %>%
-  group_by(nonprofit) %>%
-  dplyr::summarize(Mean = mean(F1, na.rm=TRUE))
-
-facts %>%
-  group_by(nonprofit) %>%
-  dplyr::summarize(Mean = mean(F2, na.rm=TRUE))
-
-SigOrgType <- c("Local Gov", "Nonprofit", "Fed Gov", "Enviro SD")
-AvgF1_OrgType <- c(0.0548, -0.479, -0.0613, 0.242)
-AvgF2_OrgType <- c(0.0804, -0.209, -0.516, -0.476)
-
-AvgFactors_OrgType <- cbind(SigOrgType, AvgF1_OrgType, AvgF2_OrgType)
-AvgFactors_OrgType <- as.data.frame(AvgFactors_OrgType)
-
-
-(AvgFact_OrgTypeFig<-ggplot()+ 
-  geom_point(data = rotated.factors,col = 'grey50',aes(y =F2,x = F1,shape = type)) + 
-    geom_text_repel(col = 'grey50',data = rotated.factors,aes(y =F2,x = F1,label = item),max.overlaps = 30) + 
-  geom_point(data = AvgFactors_OrgType, shape = 15,aes(x=as.numeric(AvgF1_OrgType), y=as.numeric(AvgF2_OrgType)))+
-  ggrepel::geom_label_repel(data=AvgFactors_OrgType, aes(label=SigOrgType,x=as.numeric(AvgF1_OrgType), y=as.numeric(AvgF2_OrgType)),min.segment.length = 0.2)+
-  xlab('Social Dimension Factor Score') + ylab("Environmental Dimension Factor Score") + 
-    theme(legend.position = c(0.2,0.2))+
-    scale_shape_discrete(name = 'item type',labels = c('problem','solution'),solid = F)+
-  ggtitle('Average ideal points for actors by organization type','overlaid on item factor scores'))
-
-ggsave(plot = AvgFact_OrgTypeFig,filename = 'output/figures/avgFscores_orgtype.png',width = 7,height = 7,dpi = 600, units = 'in')
-
 library(data.table)
 G = 1:5
 opts = data.table(expand.grid(D = 2,G = G))
@@ -807,7 +826,7 @@ mlta_results$G_fix = paste0('G = ',mlta_results$G,mlta_results$fix)
 mlta_results$BIC <- round(mlta_results$BIC)
 mlta_cast = dcast(mlta_results[order(BIC)],G_fix ~ D,value.var = 'BIC')
 names(mlta_cast)<-c('# latent groups','BIC score')
-htmlTable(mlta_cast)
+htmlTable(mlta_cast,file = 'output/tables/table2_gof_comparison.html')
 
 
 
