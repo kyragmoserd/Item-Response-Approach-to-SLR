@@ -1,4 +1,12 @@
-# SLRSurvey
-Repository for R Data of Bay Area Sea Level Rise Governance Survey (Fall 2020)
+# INSERT TITLE HERE
 
+# SUMMARY
+
+- QUICK SYNOPSIS
+
+# ABSTRACT
+
+- INSERT ABSTRACT HERE
+
+# REPLICATION INFO
 

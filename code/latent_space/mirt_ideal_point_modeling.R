@@ -20,7 +20,7 @@ invisible(sapply(packs,function(x) suppressMessages(library(x,character.only = T
 
 ### read in data
 old = theme_set(theme_bw())
-orig = readxl::read_excel('input/SLRSurvey_Full.xlsx')
+orig = readxl::read_excel('../slr_data/OriginalData/SLRSurvey_Full.xlsx')
 orig$Q4[is.na(orig$Q4)]<-'Other'
 #recode anything with fewer than 10 respondents as other
 # see what wed recode
