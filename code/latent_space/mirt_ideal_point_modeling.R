@@ -1,6 +1,6 @@
 #set seed for replicable results
 seed = 24
-
+overwrite <- F
 #DropBarriers
 DROP_BARRIERS=T
 
@@ -222,7 +222,7 @@ gg1 = ggplot(rotated.factors[order(-F1)]) +
   scale_x_continuous(name = 'Factor loading' ) + 
   ggtitle('Single dimension item discrimination')
 
-ggsave(filename = 'output/figures/discrimination_1d.png',plot = gg1,width = 4.5,height = 4.5, units = 'in',dpi = 350)
+if(overwrite){ggsave(filename = 'output/figures/discrimination_1d.png',plot = gg1,width = 4.5,height = 4.5, units = 'in',dpi = 350)}
 
 #make a data.table of item factor scores for d = 2
 rotated.factors = data.table(mirt::summary(mods[[2]],'oblimin')$rotF,item = colnames(Y))
@@ -246,7 +246,7 @@ gg2 = ggplot(rotated.factors)+
   scale_x_continuous(name = 'Factor loading, Social Dimension' ) + 
   ggtitle('Bi-dimensional Model of Policy Preferences') 
 
-ggsave(filename = 'output/figures/figure2_factor_loadings.png',plot = gg2,width = 7,height = 5.5, units = 'in',dpi = 350)
+if(overwrite){ggsave(filename = 'output/figures/figure2_factor_loadings.png',plot = gg2,width = 7,height = 5.5, units = 'in',dpi = 350)}
 #plot item and respondent locations for d = 2 model
 gg3<-ggplot() + 
   geom_point(aes(x = F1,y = F2,col = 'red'),data = rotated.factors,pch = 17,size = 2)+
@@ -261,7 +261,7 @@ gg3<-ggplot() +
   guides(color = guide_legend(override.aes = list(shape=c(1, 24), fill=c('white', 'red'))))
 
 
-ggsave(filename = 'output/figures/figure3_respondent_and_item_locations.png',plot = gg3,width = 7,height = 5.5, units = 'in',dpi = 350)
+if(overwrite){ggsave(filename = 'output/figures/figure3_respondent_and_item_locations.png',plot = gg3,width = 7,height = 5.5, units = 'in',dpi = 350)}
 #
 # compute correlations between factors scores and select variables
 # note still need to find a good way to test correlation significance without having to run cor.test a bunch of times
@@ -284,9 +284,9 @@ p2 = sapply(f2_cor_tests,function(x) x$p.value)
 temp_tab <- data.table(item = varlist,
                        F1 = paste0(est1,ifelse(p1<0.05,'*',ifelse(p1<0.01,'**',ifelse(p1<0.001,'***','')))),
                        F2 = paste0(est2,ifelse(p2<0.05,'*',ifelse(p2<0.01,'**',ifelse(p2<0.001,'***','')))))
-stargazer::stargazer(temp_tab,
+if(overwrite){stargazer::stargazer(temp_tab,
            summary = F,
-           out = 'output/tables/tableA4_correlation_tests.html')
+           out = 'output/tables/tableA4_correlation_tests.html')}
 
 
 
@@ -450,7 +450,7 @@ Concern =~ ShortTermConcern + LongTermConcern + When_SLR
 #cfa_fit = cfa(cfa_form,data = facts,ordered = c('Focus','When_SLR','ShortTermAware','LongTermAware','LongTermConcern','ShortTermConcern'))
 cfa_fit = cfa(cfa_form,data = facts)
 
-semTable(cfa_fit,file = 'output/tables/tableA2_cfa_summary.html')
+if(overwrite){semTable(cfa_fit,file = 'output/tables/tableA2_cfa_summary.html')}
 
 #### THIS IS A GRAPH OF THE CFA FOR ENGAGEMENT
 
@@ -465,7 +465,7 @@ cfa_graph = hide_var(cfa_graph)
 (gg_cfa = plot(cfa_graph) + 
     ggtitle('Confirmatory factor analysis of SLR engagement constructs') +
     coord_flip())
-ggsave(plot = gg_cfa,filename = 'output/figures/figure3_cfa_plot.png',width = 6,height = 4.5,dpi = 300, units = 'in')
+if(overwrite){ggsave(plot = gg_cfa,filename = 'output/figures/figure3_cfa_plot.png',width = 6,height = 4.5,dpi = 300, units = 'in')}
 
 
 ####SEM Model (all actor types and two latent variables)---------------------
@@ -564,7 +564,7 @@ summary(sem_fitfin,fit.measures = T)
 
 sem_htmlfin2 <- semTable(sem_fitfin2, type="html")
 
-readr::write_file(sem_htmlfin2, "output/tables/tableA3_sem_model_nonprofit.html")
+if(overwrite){readr::write_file(sem_htmlfin2, "output/tables/tableA3_sem_model_nonprofit.html")}
 
  start= get_layout(
    # row 2
@@ -599,7 +599,7 @@ sem_graph$nodes$label[sem_graph$nodes$label=='nonprofit']<-''
  ) 
 
 
-ggsave(filename = 'output/figures/figure5_SEM_diagram.png',plot = gg_sem,dpi = 300,width = 7,height = 5,units = 'in')
+if(overwrite){ggsave(filename = 'output/figures/figure5_SEM_diagram.png',plot = gg_sem,dpi = 300,width = 7,height = 5,units = 'in')}
 
 
 #Average Ideal Point Location by Org Type
@@ -658,7 +658,7 @@ AvgFactors_OrgType <- as.data.frame(AvgFactors_OrgType)
     scale_shape_discrete(name = 'item type',labels = c('problem','solution'),solid = F)+
     ggtitle('Average ideal points for actors by organization type','overlaid on item factor scores'))
 
-ggsave(plot = AvgFact_OrgTypeFig,filename = 'output/figures/figure6_avgFscores_orgtype.png',width = 7,height = 7,dpi = 600, units = 'in')
+if(overwrite){ggsave(plot = AvgFact_OrgTypeFig,filename = 'output/figures/figure6_avgFscores_orgtype.png',width = 7,height = 7,dpi = 600, units = 'in')}
 
 
 
@@ -745,7 +745,7 @@ concernsums_v2 <- c(434, 393, 315, 227, 137, 128, 88, 81, 51, 41, 36, 24)
 concernnames_v2 <- c("Transpo", "Stormwater Wastewater", "DACs", "Ecosystem", "Water", "Erosion", "Housing", "Public Health", "Econ Growth", "Energy", "Property Value", "Commercial")  
 concernmatrix_v2 <- data.frame(name=concernnames_v2, value=concernsums_v2)
 
-ggsave(filename='output/figures/figure_concerns_bar_plot_final.png', width = 4.5,height = 4.5, dpi = 350)
+if(overwrite){ggsave(filename='output/figures/figure_concerns_bar_plot_final.png', width = 4.5,height = 4.5, dpi = 350)}
 ggplot(concernmatrix_v2, aes(x=reorder(name, value), y=value))+
   geom_bar(stat="identity")+
   coord_flip()+
@@ -771,7 +771,7 @@ policysums_v2 <- c(261, 167, 75, 141, 162, 120, 121, 200, 82, 100, 42, 89, 149, 
 policynames_v2 <- c("SLR Plan", "Vulnerability Assessment", "Local Tax", "Fund Lobbying", "Streamline Permits", "Info Platform", "DACs Focus", "Green Infrastructure", "Visioning", "Innovative Design", "Local Response", "Regional Authority", "Existing Agency", "Collaboration")  
 policymatrix_v2 <- data.frame(value=policysums_v2, name=policynames_v2)
 
-ggsave(filename='output/figures/figure_policies_bar_plot_final.png', width = 4.5,height = 4.5, dpi = 350)
+if(overwrite){ggsave(filename='output/figures/figure_policies_bar_plot_final.png', width = 4.5,height = 4.5, dpi = 350)}
 ggplot(policymatrix_v2, aes(x=reorder(name, value), y=value))+
   geom_bar(stat="identity")+
   coord_flip()+
@@ -798,7 +798,7 @@ mlta_results$G_fix = paste0('G = ',mlta_results$G,mlta_results$fix)
 mlta_results$BIC <- round(mlta_results$BIC)
 mlta_cast = dcast(mlta_results[order(BIC)],G_fix ~ D,value.var = 'BIC')
 names(mlta_cast)<-c('# latent groups','BIC score')
-htmlTable(mlta_cast,file = 'output/tables/table2_gof_comparison.html')
+if(overwrite){htmlTable(mlta_cast,file = 'output/tables/table2_gof_comparison.html')}
 
 
 
