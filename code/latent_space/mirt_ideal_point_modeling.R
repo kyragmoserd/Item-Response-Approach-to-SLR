@@ -433,7 +433,7 @@ facts$When_SLR = facts$When_SLR * -1
 #     coord_flip())
 # ggsave(plot = gg_cfa2,filename = 'output/figures/cfa_plot_V2.png',width = 6,height = 4.5,dpi = 300, units = 'in')
 
-#Figure 4 CFA Plot Fixes- Retitle and Change Labels
+#CFA Plot Fixes- Retitle and Change Labels
 
 facts$ShortTermAware <- facts$Q11_STAware
 facts$LongTermAware <- facts$Q11_LTAware
@@ -602,7 +602,7 @@ sem_graph$nodes$label[sem_graph$nodes$label=='nonprofit']<-''
 ggsave(filename = 'output/figures/figure5_SEM_diagram.png',plot = gg_sem,dpi = 300,width = 7,height = 5,units = 'in')
 
 
-#Figure 6- Average Location by Org Type
+#Average Ideal Point Location by Org Type
 
 #Average F1 and F2 for Fed
 facts %>%
@@ -732,49 +732,15 @@ stargazer(ols1, ols2)
 # corrplot(corrs2, method='color')
 # corrplot(corrs2, method='circle')
 
-####Create Basic Descriptive Figures for Paper--------------------
-#concerns
+####Basic Descriptive Figures--------------------
+##Figure 1 Concerns Bar Plot
 allconcerns <-incidence_dt[,c(17:29)]
 allconcerns %>%
   summarise_all(sum)
 concernsums <- c(434, 137, 393, 41, 227, 128, 24, 315, 51, 36, 88, 81, 21)
 concernnames <- c("Transpo", "Water", "Stormwater Wastewater", "Energy", "Ecosystem", "Erosion", "Commercial", "DACs", "Econ Growth", "Property Value", "Housing", "Public Health", "Other")  
 concernmatrix <- data.frame(name=concernnames, value=concernsums)
-
-ggplot(concernmatrix, aes(x=name, y=value))+
-  geom_bar(stat="identity")+
-  coord_flip()+
-  geom_text(aes(label = value), vjust = 0.4, hjust=1, colour="white")+
-  theme(axis.title.x=element_blank(),
-        axis.title.y=element_blank())+
-  ggtitle("Concerns for SLR Impacts")+
-  theme(plot.title = element_text(hjust = 0.5))
-
-
-#policies
-allpolicies <-incidence_dt[,c(2:16)]
-
-allpolicies %>%
-  summarise_all(sum)
-
-policysums <- c(261, 167, 75, 141, 162, 120, 121, 200, 82, 100, 42, 89, 149, 243, 34)
-policynames <- c("SLR Plan", "Vulnerability Assessment", "Local Tax", "Fund Lobbying", "Streamline Permits", "Info Platform", "DACs Focus", "Green Infrastructure", "Visioning", "Innovative Design", "Local Response", "Regional Authority", "Existing Agency", "Collaboration", "Other")  
-policymatrix <- data.frame(value=policysums, name=policynames)
-
-ggsave(filename='output/figures/figure_policies_bar_plot.png', width = 4.5,height = 4.5, dpi = 350)
-ggplot(policymatrix, aes(x=name, y=value))+
-  geom_bar(stat="identity")+
-  coord_flip()+
-  geom_text(aes(label = value), vjust = 0.4, hjust=1, colour="white")+
-  theme(axis.title.x=element_blank(),
-        axis.title.y=element_blank())+
-  ggtitle("Policy Preferences")+
-  theme(plot.title = element_text(hjust = 0.5))
-dev.off()
-
-########Edits to Figures for Paper Update 12-29-21-----------
-#Figure 1 Concerns Bar Plot
-#Fixes- Remove Other, Reorder by Frequency
+#Remove Other, Reorder by Frequency
 concernsums_v2 <- c(434, 393, 315, 227, 137, 128, 88, 81, 51, 41, 36, 24)
 concernnames_v2 <- c("Transpo", "Stormwater Wastewater", "DACs", "Ecosystem", "Water", "Erosion", "Housing", "Public Health", "Econ Growth", "Energy", "Property Value", "Commercial")  
 concernmatrix_v2 <- data.frame(name=concernnames_v2, value=concernsums_v2)
@@ -791,7 +757,16 @@ ggplot(concernmatrix_v2, aes(x=reorder(name, value), y=value))+
 
 
 #Figure 1 Policies Bar Plot
-#Fixes- Remove Other, Reorder by Frequency
+allpolicies <-incidence_dt[,c(2:16)]
+
+allpolicies %>%
+  summarise_all(sum)
+
+policysums <- c(261, 167, 75, 141, 162, 120, 121, 200, 82, 100, 42, 89, 149, 243, 34)
+policynames <- c("SLR Plan", "Vulnerability Assessment", "Local Tax", "Fund Lobbying", "Streamline Permits", "Info Platform", "DACs Focus", "Green Infrastructure", "Visioning", "Innovative Design", "Local Response", "Regional Authority", "Existing Agency", "Collaboration", "Other")  
+policymatrix <- data.frame(value=policysums, name=policynames)
+
+#Remove Other, Reorder by Frequency
 policysums_v2 <- c(261, 167, 75, 141, 162, 120, 121, 200, 82, 100, 42, 89, 149, 243)
 policynames_v2 <- c("SLR Plan", "Vulnerability Assessment", "Local Tax", "Fund Lobbying", "Streamline Permits", "Info Platform", "DACs Focus", "Green Infrastructure", "Visioning", "Innovative Design", "Local Response", "Regional Authority", "Existing Agency", "Collaboration")  
 policymatrix_v2 <- data.frame(value=policysums_v2, name=policynames_v2)
@@ -805,9 +780,6 @@ ggplot(policymatrix_v2, aes(x=reorder(name, value), y=value))+
         axis.title.y=element_blank())+
   ggtitle("Preferred Policy Solutions")+
   theme(plot.title = element_text(hjust = 0.5))
-
-
-
 
 library(data.table)
 G = 1:5
